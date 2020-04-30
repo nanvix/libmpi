@@ -23,37 +23,37 @@
 #
 
 # Builds contrib.
-contrib: contrib-libnanvix
+contrib: contrib-ulibc
 
 # Builds contrib headers.
-contrib-headers: contrib-headers-libnanvix
+contrib-headers: contrib-headers-ulibc
 
 # Cleans contrib.
-contrib-uninstall: contrib-uninstall-libnanvix
+contrib-uninstall: contrib-uninstall-ulibc
 
 # Cleans contrib headers.
-contrib-uninstall-headers: contrib-uninstall-headers-libnanvix
+contrib-uninstall-headers: contrib-uninstall-headers-ulibc
 
 #===============================================================================
 # Nanvix Library
 #===============================================================================
 
 # Builds Nanvix Library.
-contrib-libnanvix: make-dirs
-	$(MAKE) -C $(CONTRIBDIR)/libnanvix contrib RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/libnanvix install PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+contrib-ulibc: make-dirs
+	$(MAKE) -C $(CONTRIBDIR)/ulibc contrib RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/ulibc install PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
 
 # Builds Nanvix Library headers.
-contrib-headers-libnanvix: make-dirs
-	$(MAKE) -C $(CONTRIBDIR)/libnanvix contrib-headers RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/libnanvix install-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+contrib-headers-ulibc: make-dirs
+	$(MAKE) -C $(CONTRIBDIR)/ulibc contrib-headers RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/ulibc install-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
 
 # Cleans Nanvix Library.
-contrib-uninstall-libnanvix:
-	$(MAKE) -C $(CONTRIBDIR)/libnanvix uninstall PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/libnanvix contrib-uninstall RELEASE=$(RELEASE)
+contrib-uninstall-ulibc:
+	$(MAKE) -C $(CONTRIBDIR)/ulibc uninstall PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/ulibc contrib-uninstall RELEASE=$(RELEASE)
 
 # Cleans Nanvix Library headers.
-contrib-uninstall-headers-libnanvix:
-	$(MAKE) -C $(CONTRIBDIR)/libnanvix uninstall-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/libnanvix contrib-uninstall-headers RELEASE=$(RELEASE)
+contrib-uninstall-headers-ulibc:
+	$(MAKE) -C $(CONTRIBDIR)/ulibc uninstall-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/ulibc contrib-uninstall-headers RELEASE=$(RELEASE)
