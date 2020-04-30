@@ -1,3 +1,6 @@
 [submodule "contrib/ulibc"]
 	path = contrib/ulibc
 	url = https://github.com/nanvix/ulibc.git
+[submodule "utils"]
+	path = utils
+	url = https://github.com/nanvix/utils.git
