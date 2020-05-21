@@ -125,7 +125,7 @@ clean: clean-target
 
 # Cleans everything.
 distclean: distclean-target
-	@rm -rf $(IMAGE) $(BINDIR)/$(EXECBIN) $(LIBDIR)/$(LIBC)
+	@rm -rf $(IMAGE) $(BINDIR)/$(EXECBIN) $(LIBDIR)/$(LIBMPI)
 
 #===============================================================================
 # Contrib Install and Uninstall Rules

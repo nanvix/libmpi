@@ -48,8 +48,8 @@ install: | all-target install-headers
 	@echo [CP] $(PREFIX)/lib/libhal*.a
 	@echo [CP] $(PREFIX)/lib/libkernel*.a
 	@echo [CP] $(PREFIX)/lib/liblwip*.a
-	@echo [RM] $(PREFIX)/lib/libnanvix*.a
-	@echo [RM] $(PREFIX)/lib/libc*.a
+	@echo [CP] $(PREFIX)/lib/libnanvix*.a
+	@echo [CP] $(PREFIX)/lib/libc*.a
 	@echo [RM] $(PREFIX)/lib/libmpi*.a
 	@echo "==============================================================================="
 	@echo "Nanvix Libmpi Successfully Installed"

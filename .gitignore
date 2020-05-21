@@ -17,6 +17,9 @@ lib/
 *.swo
 *.vscode/
 
+# Run logs
+*nanvix-cluster-*
+
 # KLib Headers
 include/nanvix/barelib.h
 include/posix/decl.h
@@ -42,13 +45,12 @@ include/posix/stdbool.h
 include/posix/stddef.h
 include/posix/stdint.h
 
-
 # Kernel Headers
 include/dev/
 include/nanvix/kernel/
 
 # Nanvix Library
-include/nanvix/runtime/stdikc.h
+include/nanvix/runtime/
 include/nanvix/sys/
 
 # C Library
