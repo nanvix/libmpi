@@ -27,6 +27,7 @@
 #include <mputil/proc.h>
 #include <mputil/object.h>
 #include <mpi/group.h>
+#include <mpi/communicator.h>
 #include <mpi.h>
 
 /**
@@ -57,6 +58,14 @@ int __main2(int argc, const char *argv[])
 
 	group = mpi_group_allocate(2);
 
+	uassert(mpi_group_rank(group) == MPI_UNDEFINED);
+
+	mpi_group_set_rank(group, process_lookup("nanvix-process-0"));
+
+	uassert(mpi_group_rank(group) == MPI_UNDEFINED);
+
+	uprintf("Set Rank asserted");
+
 	uassert(group != MPI_GROUP_EMPTY);
 
 	uprintf("Group asserted");
@@ -75,9 +84,23 @@ int __main2(int argc, const char *argv[])
 
 	mpi_group_free(&group);
 
+	mpi_comm_init();
+
+	uprintf("Communicators initialized");
+
+	mpi_comm_finalize();
+
+	uprintf("Communicators finalized");
+
 	uassert(mpi_group_finalize() == 0);
 
 	uprintf("Group system finalized");
+
+	local = process_lookup("nanvix-process-0");
+
+	uassert(local == process_local());
+
+	uprintf("Asserted lookup");
 
 	uassert(mpi_proc_finalize() == 0);
 
