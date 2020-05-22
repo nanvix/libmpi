@@ -54,7 +54,7 @@ PRIVATE void mpi_group_construct(mpi_group_t * group)
 /**
  * @brief Group destructor.
  */
-PUBLIC void mpi_group_destruct(mpi_group_t * group)
+PRIVATE void mpi_group_destruct(mpi_group_t * group)
 {
     uassert(group != NULL);
 
