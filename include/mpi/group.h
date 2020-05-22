@@ -104,6 +104,30 @@ static inline int mpi_group_rank(mpi_group_t * group)
 }
 
 /**
+ * @brief Sets the local process rank inside the given group.
+ *
+ * @param group Group descriptor.
+ * @param proc  Local process descriptor.
+ *
+ * @note A NULL pointer in @p proc will set the group rank to MPI_UNDEFINED.
+ */
+extern void mpi_group_set_rank(mpi_group_t * group, mpi_process_t * proc);
+
+/**
+ * @brief Increments the refcount of each process in @p group.
+ *
+ * @param group Group of processes to be manipulated.
+ */
+extern void mpi_group_increment_proc_count(mpi_group_t *);
+
+/**
+ * @brief Decrements the refcount of each process in @p group.
+ *
+ * @param group Group of processes to be manipulated.
+ */
+extern void mpi_group_decrement_proc_count(mpi_group_t *);
+
+/**
  * @brief Initializes the groups submodule.
  *
  * @returns Upon successful completion, zero is returned. A
