@@ -28,6 +28,8 @@
 #include <nanvix/hal.h>
 #include <mputil/object.h>
 
+#define PROCESS_NAME_MAX_LENGTH 32
+
 /**
  * @brief Struct that defines a dynamic pointer array.
  */
@@ -35,6 +37,7 @@ struct mpi_process_t
 {
 	object_t super; /* Base object class. */
 
+	char name[PROCESS_NAME_MAX_LENGTH];
 	int pid;        /* Process ID.        */
 	int nodenum;    /* Process nodenum.   */
 };
@@ -73,6 +76,26 @@ static inline int process_nodenum(mpi_process_t *proc)
  * @returns Pointer to the local process descriptor.
  */
 extern mpi_process_t * process_local(void);
+
+/**
+ * @brief Make a name lookup on the processes list.
+ *
+ * @param name Name of process to lookup.
+ *
+ * @returns UPon successful completion. a pointer to the process
+ * descriptor is returned. Upon failure, a NULL pointer is returned
+ * instead.
+ *
+ * @note If the name could not be found, a NULL pointer is returned.
+ */
+extern mpi_process_t * process_lookup(const char* name);
+
+/**
+ * @brief Gets the number of processes active.
+ *
+ * @returns The number of active processes.
+ */
+extern int mpi_proc_count(void);
 
 /**
  * @brief Initializes the processes submodule.
