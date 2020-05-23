@@ -49,7 +49,8 @@ LIBS += $(LIBDIR)/$(BARELIB) $(THEIR_LIBS)
 #===============================================================================
 
 # C Source Files
-SRC = $(wildcard group/*.c)
+SRC = $(wildcard group/*.c) \
+      $(wildcard communicator/*.c)
 
 #===============================================================================
 # Object Files

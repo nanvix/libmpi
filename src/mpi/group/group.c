@@ -29,8 +29,6 @@
 
 PRIVATE void mpi_group_construct(mpi_group_t *);
 PRIVATE void mpi_group_destruct(mpi_group_t *);
-PRIVATE void mpi_group_increment_proc_count(mpi_group_t *);
-PRIVATE void mpi_group_decrement_proc_count(mpi_group_t *);
 
 OBJ_CLASS_INSTANCE(mpi_group_t, &mpi_group_construct, &mpi_group_destruct, sizeof(mpi_group_t));
 
@@ -75,7 +73,7 @@ PRIVATE void mpi_group_destruct(mpi_group_t * group)
  *
  * @param group Group of processes to be manipulated.
  */
-PRIVATE void mpi_group_increment_proc_count(mpi_group_t * group)
+PUBLIC void mpi_group_increment_proc_count(mpi_group_t * group)
 {
 	uassert(group != NULL);
 	uassert(group->size >= 0);
@@ -93,7 +91,7 @@ PRIVATE void mpi_group_increment_proc_count(mpi_group_t * group)
  *
  * @param group Group of processes to be manipulated.
  */
-PRIVATE void mpi_group_decrement_proc_count(mpi_group_t * group)
+PUBLIC void mpi_group_decrement_proc_count(mpi_group_t * group)
 {
 	uassert(group != NULL);
 	uassert(group->size >= 0);
@@ -203,6 +201,34 @@ PUBLIC int mpi_group_free(mpi_group_t ** group)
 	*group = MPI_GROUP_NULL;
 
 	return (0);
+}
+
+/**
+ * @brief Sets the local process rank inside the given group.
+ *
+ * @param group Group descriptor.
+ * @param proc  Local process descriptor.
+ *
+ * @note A NULL pointer in @p proc will set the group rank to MPI_UNDEFINED.
+ */
+PUBLIC void mpi_group_set_rank(mpi_group_t * group, mpi_process_t * proc)
+{
+	uassert(group != NULL);
+
+	group->my_rank = MPI_UNDEFINED;
+
+	/* Loop over the group to assert that proc participates on it. */
+	if (proc != NULL)
+	{
+		for (int i = 0; i < group->size; ++i)
+		{
+			if (proc == group->procs[i])
+			{
+				group->my_rank = i;
+				break;
+			}
+		}
+	}
 }
 
 /**

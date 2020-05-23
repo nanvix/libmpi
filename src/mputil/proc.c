@@ -58,6 +58,7 @@ PRIVATE void process_construct(mpi_process_t *proc)
 	uassert(proc != NULL);
 
     proc->nodenum = -1;
+    proc->pid     = -1;
 }
 
 /**
@@ -102,6 +103,7 @@ PUBLIC int process_allocate(int nodeid)
 	/* Initializes the process info. */
 	proc->pid     = ret;
 	proc->nodenum = nodeid;
+	usprintf(proc->name, "nanvix-process-%d", nodeid);
 
 	return (ret);
 }
@@ -114,6 +116,47 @@ PUBLIC int process_allocate(int nodeid)
 PUBLIC mpi_process_t * process_local(void)
 {
 	return (_local_proc);
+}
+
+/**
+ * @brief Make a name lookup on the processes list.
+ *
+ * @param name Name of process to lookup.
+ *
+ * @returns Upon successful completion. a pointer to the process
+ * descriptor is returned. Upon failure, a NULL pointer is returned
+ * instead.
+ *
+ * @note If the name could not be found, a NULL pointer is returned.
+ */
+PUBLIC mpi_process_t * process_lookup(const char* name)
+{
+	int limit;
+	mpi_process_t * proc;
+
+	limit = pointer_array_get_max_size(&_processes_list);
+
+	for (int i = 0; i < limit; ++i)
+	{
+		proc = (mpi_process_t *) pointer_array_get_item(&_processes_list, i);
+		if (proc == NULL)
+			continue;
+
+		if (!ustrcmp(name, proc->name))
+			return (proc);
+	}
+
+	return (NULL);
+}
+
+/**
+ * @brief Gets the number of processes active.
+ *
+ * @returns The number of active processes.
+ */
+PUBLIC int mpi_proc_count(void)
+{
+	return (_processes_nr);
 }
 
 /**

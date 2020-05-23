@@ -162,15 +162,21 @@
  */
 extern struct mpi_group_t _mpi_group_empty;
 extern struct mpi_group_t _mpi_group_null;
+extern struct mpi_communicator_t _mpi_comm_world;
+extern struct mpi_communicator_t _mpi_comm_self;
+extern struct mpi_communicator_t _mpi_comm_null;
 
 /**
  * @brief Predefined handlers.
  */
 #define MPI_GROUP_EMPTY &_mpi_group_empty
+#define MPI_COMM_SELF   &_mpi_comm_self
+#define MPI_COMM_WORLD  &_mpi_comm_world
 
 /**
  * @brief Null handlers.
  */
-#define MPI_GROUP_NULL  &_mpi_group_null
+#define MPI_GROUP_NULL &_mpi_group_null
+#define MPI_COMM_NULL  &_mpi_comm_null
 
 #endif /* NANVIX_LIBMPI_H_ */
