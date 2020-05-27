@@ -26,6 +26,30 @@
 #define NANVIX_LIBMPI_MPI_H_
 
 /**
+ * @note Temporary definitions. Declared only for convenience on errhandlers definition.
+ * It should be dropped from here and defined in specific files for each when properly
+ * supported.
+ */
+typedef struct mpi_win_t mpi_win_t;
+typedef struct mpi_file_t mpi_file_t;
+
+/**
+ * @brief User exported typedefs.
+ */
+typedef struct mpi_communicator_t *MPI_Comm;
+typedef struct mpi_group_t        *MPI_Group;
+typedef struct mpi_win_t          *MPI_Win;
+typedef struct mpi_file_t         *MPI_File;
+typedef struct mpi_errhandler_t   *MPI_Errhandler;
+
+/**
+ * @brief User exported function typedefs.
+ */
+typedef void MPI_Comm_errhandler_function(MPI_Comm *, int *, ...);
+typedef void MPI_Win_errhandler_function(MPI_Win *, int *, ...);
+typedef void MPI_File_errhandler_function(MPI_File *, int *, ...);
+
+/**
  * @brief Maximum string sizes constants.
  */
 #define MPI_MAX_DATAREP_STRING          64
@@ -165,18 +189,26 @@ extern struct mpi_group_t _mpi_group_null;
 extern struct mpi_communicator_t _mpi_comm_world;
 extern struct mpi_communicator_t _mpi_comm_self;
 extern struct mpi_communicator_t _mpi_comm_null;
+extern struct mpi_errhandler_t _mpi_errhandler_errors_fatal;
+extern struct mpi_errhandler_t _mpi_errhandler_errors_abort;
+extern struct mpi_errhandler_t _mpi_errors_return;
+extern struct mpi_errhandler_t _mpi_errhandler_null;
 
 /**
  * @brief Predefined handlers.
  */
-#define MPI_GROUP_EMPTY &_mpi_group_empty
-#define MPI_COMM_SELF   &_mpi_comm_self
-#define MPI_COMM_WORLD  &_mpi_comm_world
+#define MPI_GROUP_EMPTY      &_mpi_group_empty
+#define MPI_COMM_SELF        &_mpi_comm_self
+#define MPI_COMM_WORLD       &_mpi_comm_world
+#define MPI_ERRORS_ARE_FATAL &_mpi_errhandler_errors_fatal
+#define MPI_ERRORS_ABORT     &_mpi_errhandler_errors_abort
+#define MPI_ERRORS_RETURN    &_mpi_errors_return;
 
 /**
  * @brief Null handlers.
  */
-#define MPI_GROUP_NULL &_mpi_group_null
-#define MPI_COMM_NULL  &_mpi_comm_null
+#define MPI_GROUP_NULL      &_mpi_group_null
+#define MPI_COMM_NULL       &_mpi_comm_null
+#define MPI_ERRHANDLER_NULL &_mpi_errhandler_null;
 
 #endif /* NANVIX_LIBMPI_H_ */

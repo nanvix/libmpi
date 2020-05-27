@@ -31,7 +31,7 @@ PRIVATE void mpi_comm_construct(mpi_communicator_t *);
 PRIVATE void mpi_comm_destruct(mpi_communicator_t *);
 
 OBJ_CLASS_INSTANCE(mpi_communicator_t, &mpi_comm_construct, &mpi_comm_destruct,
-	               sizeof(mpi_communicator_t));
+                   sizeof(mpi_communicator_t));
 
 /**
  * @brief Predefined communicators.
@@ -47,11 +47,13 @@ PRIVATE void mpi_comm_construct(mpi_communicator_t * comm)
 {
 	uassert(comm != NULL);
 
-	comm->group     = NULL;
-	comm->my_rank   = MPI_UNDEFINED;
-	comm->pt2pt_cid = MPI_UNDEFINED;
-	comm->coll_cid  = MPI_UNDEFINED;
-	comm->parent    = NULL;
+	comm->group           = NULL;
+	comm->my_rank         = MPI_UNDEFINED;
+	comm->pt2pt_cid       = MPI_UNDEFINED;
+	comm->coll_cid        = MPI_UNDEFINED;
+	comm->error_handler   = NULL;
+	comm->errhandler_type = MPI_ERRHANDLER_TYPE_COMM;
+	comm->parent          = NULL;
 }
 
 /**
@@ -61,15 +63,19 @@ PRIVATE void mpi_comm_construct(mpi_communicator_t * comm)
  */
 PRIVATE void mpi_comm_destruct(mpi_communicator_t * comm)
 {
-    uassert(comm != NULL);
+	uassert(comm != NULL);
 
-    /* Release the associated group. */
-    if (comm->group != NULL)
-    	OBJ_RELEASE(comm->group);
+	/* Release the associated group. */
+	if (comm->group != NULL)
+		OBJ_RELEASE(comm->group);
 
-    /* Release parent reference. */
-    if (comm->parent != NULL)
-    	OBJ_RELEASE(comm->parent);
+	/* Release the associated error handler. */
+	if (comm->error_handler != NULL)
+		OBJ_RELEASE(comm->error_handler);
+
+	/* Release parent reference. */
+	if (comm->parent != NULL)
+		OBJ_RELEASE(comm->parent);
 }
 
 /**
@@ -173,10 +179,12 @@ PUBLIC int mpi_comm_init(void)
 	mpi_group_increment_proc_count(group);
 	mpi_group_set_rank(group, process_local());
 
-	_mpi_comm_world.group     = group;
-	_mpi_comm_world.my_rank   = group->my_rank;
-	_mpi_comm_world.pt2pt_cid = 0;
-	_mpi_comm_world.coll_cid  = 1;
+	_mpi_comm_world.group         = group;
+	_mpi_comm_world.my_rank       = group->my_rank;
+	_mpi_comm_world.pt2pt_cid     = 0;
+	_mpi_comm_world.coll_cid      = 1;
+	_mpi_comm_world.error_handler = MPI_ERRORS_ARE_FATAL;
+	OBJ_RETAIN(_mpi_comm_world.error_handler);
 
 	/* Setup MPI_COMM_SELF. */
 	OBJ_CONSTRUCT(&_mpi_comm_self, mpi_communicator_t);
@@ -192,16 +200,20 @@ PUBLIC int mpi_comm_init(void)
 	mpi_group_increment_proc_count(group);
 	mpi_group_set_rank(group, process_local());
 
-	_mpi_comm_self.group     = group;
-	_mpi_comm_self.my_rank   = group->my_rank;
-	_mpi_comm_self.pt2pt_cid = 2;
-	_mpi_comm_self.coll_cid  = MPI_UNDEFINED;
+	_mpi_comm_self.group         = group;
+	_mpi_comm_self.my_rank       = group->my_rank;
+	_mpi_comm_self.pt2pt_cid     = 2;
+	_mpi_comm_self.coll_cid      = MPI_UNDEFINED;
+	_mpi_comm_self.error_handler = MPI_ERRORS_ARE_FATAL;
+	OBJ_RETAIN(_mpi_comm_self.error_handler);
 
 	/* Setup MPI_COMM_NULL. */
 	OBJ_CONSTRUCT(&_mpi_comm_null, mpi_communicator_t);
-	_mpi_comm_null.group     = MPI_GROUP_NULL;
-	_mpi_comm_null.my_rank   = MPI_PROC_NULL;
-	OBJ_RETAIN(MPI_GROUP_NULL);
+	_mpi_comm_null.group         = MPI_GROUP_NULL;
+	OBJ_RETAIN(_mpi_comm_null.group);
+	_mpi_comm_null.my_rank       = MPI_PROC_NULL;
+	_mpi_comm_null.error_handler = MPI_ERRORS_ARE_FATAL;
+	OBJ_RETAIN(_mpi_comm_null.error_handler);
 	
 	return (0);
 }

@@ -25,25 +25,27 @@
 #ifndef NANVIX_MPI_COMMUNICATOR_H_
 #define NANVIX_MPI_COMMUNICATOR_H_
 
-#include <nanvix/hal.h>
 #include <mputil/object.h>
 #include <mpi/group.h>
+#include <mpi/errhandler.h>
 #include <mpi.h>
 
 /**
  * @brief Struct that defines a mpi_communicator.
- *
- * @todo Insert a MPI_Errorhandler reference when impl. supports it.
  */
 struct mpi_communicator_t
 {
-	object_t super;                    /* Base object class.              */
+	object_t super;                        /* Base object class.             */
 
-	struct mpi_group_t *group;         /* Group associated with the comm. */
-	int my_rank;                       /* Local rank inside comm.         */
-	int pt2pt_cid;                     /* Point-to-point context ID.      */
-	int coll_cid;                      /* Collective context ID.          */
-	struct mpi_communicator_t *parent; /* Parent communicator.            */
+	struct mpi_group_t *group;             /* Group associated with comm.    */
+	int my_rank;                           /* Local rank inside comm.        */
+	int pt2pt_cid;                         /* Point-to-point context ID.     */
+	int coll_cid;                          /* Collective context ID.         */
+
+	mpi_errhandler_t *error_handler;       /* Comm error handler.            */
+	mpi_errhandler_type_t errhandler_type; /* Type of associated errhandler. */
+
+	struct mpi_communicator_t *parent;     /* Parent communicator.           */
 };
 
 typedef struct mpi_communicator_t mpi_communicator_t;
