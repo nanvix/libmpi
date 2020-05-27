@@ -22,60 +22,44 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_MPI_RUNTIME_H_
-#define NANVIX_MPI_RUNTIME_H_
-
+#include <mpi/mpiruntime.h>
+#include <mpi/errhandler.h>
 #include <mpi.h>
 
-/**
- * @note Forward struct declaration to avoid circular references.
- */
-struct mpi_communicator_t;
+static const char FUNC_NAME[] = "MPI_Init";
 
 /**
- * @brief MPI runtime possible states enum.
- */
-typedef enum {
-	MPI_STATE_NOT_INITIALIZED = 0,
-	MPI_STATE_INIT_STARTED,
-	MPI_STATE_INITIALIZED,
-	MPI_STATE_FINALIZE_STARTED,
-	MPI_STATE_FINALIZED
-} mpi_state_t;
-
-/**
- * @brief Global MPI state variable.
- */
-extern mpi_state_t _mpi_state;
-
-/**
- * @brief Initializes the MPI runtime.
+ * @brief Initializes the MPI environment.
  *
  * @param argc Number of arguments in @p argv.
  * @param argv Program arguments.
  *
- * @returns Upon successful completion, MPI_SUCCESS is returned. A
- * negative error code is returned instead.
- */
-extern int mpi_init(int argc, char **argv);
-
-/**
- * @brief Finalizes the MPI runtime.
+ * @returns Upon successful completion, MPI_SUCCESS is returned.
+ * Upon failure, a MPI error code is returned and the environment
+ * aborted.
  *
- * @returns Upon successful completion, MPI_SUCCESS is returned. A
- * negative error code is returned instead.
+ * @note Initialization functions like MPI_Init or MPI_Init_thread
+ * can be called once and exclusively in a MPI execution. All
+ * subsequent calls will be erroneous.
  */
-extern int mpi_finalize(void);
+PUBLIC int MPI_Init(int *argc, char ***argv)
+{
+	int ret;
 
-/**
- * @brief Aborts the MPI runtime.
- *
- * @param comm     Communicator that have the group of processes to be aborted.
- * @param errocode Errorcode to be returned to the caller environment.
- *
- * @returns Upon successful completion, MPI_SUCCESS is returned. A
- * negative error code is returned instead.
- */
-extern int mpi_abort(struct mpi_communicator_t *comm, int errorcode);
+	/* Call the backend initialization function. */
+	if ((argc != NULL) && (argv != NULL))
+		ret = mpi_init(*argc, *argv);
+	else
+		ret = mpi_init(0, NULL);
 
-#endif /* NANVIX_MPI_RUNTIME_H_ */
+	/* Checks if an error occured during initialization. */
+	if (ret != MPI_SUCCESS)
+	{
+		/* Calls the default error handler to abort execution. */
+		return (mpi_errhandler_invoke(NULL, NULL, MPI_ERRHANDLER_TYPE_COMM,
+		                              ret, FUNC_NAME)
+		       );
+	}
+
+	return (MPI_SUCCESS);
+}

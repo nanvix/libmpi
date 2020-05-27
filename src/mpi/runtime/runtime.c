@@ -22,22 +22,105 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hlib.h>
-#include <nanvix/ulib.h>
-#include <posix/errno.h>
+#include <nanvix/hal.h>
+#include <mputil/proc.h>
 #include <mpi/mpiruntime.h>
+#include <mpi/errhandler.h>
+#include <mpi/group.h>
+#include <mpi/communicator.h>
 
 /**
  * @brief Global MPI state variable.
  */
 mpi_state_t _mpi_state = MPI_STATE_NOT_INITIALIZED;
 
+spinlock_t _runtime_lock;
+
 /**
  * @see mpi_init() at mpiruntime.h.
  */
-PUBLIC int mpi_init(void)
+PUBLIC int mpi_init(int argc, char **argv)
 {
+	int ret;
+
+	UNUSED(argc);
+	UNUSED(argv);
+
+	/* Locks the runtime to evaluate mpi_state. */
+	spinlock_lock(&_runtime_lock);
+
+		/* Checks if this function was already called. */
+		if (_mpi_state != MPI_STATE_NOT_INITIALIZED)
+		{
+			spinlock_unlock(&_runtime_lock);
+			return (MPI_ERR_OTHER);
+		}
+
+		_mpi_state = MPI_STATE_INIT_STARTED;
+
+	spinlock_unlock(&_runtime_lock);
+
+	/* Initialize MPI_Datatypes. */
+
+	/* Initializes processes. */
+	if ((ret = mpi_proc_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! mpi_proc_init() failed");
+		goto error;
+	}
+
+	/* Initialize MPI_Ops. */
+
+	/* Initialize Buffered Send component. */
+
+	/* Initialize MPI_Requests. */
+
+	/* Initialize MPI_Messages. */
+
+	/* Initialize MPI_Info. */
+
+	/* Initialize MPI_Errhandlers. */
+	if ((ret = mpi_errhandler_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! mpi_errhandler_init() failed");
+		goto error;
+	}
+
+	/* Initialize errorcodes. */
+
+	/* Initialize MPI_Groups. */
+	if ((ret = mpi_group_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! mpi_group_init() failed");
+		goto error;
+	}
+
+	/* Initialize MPI_Communicators. */
+	if ((ret = mpi_comm_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! mpi_comm_init() failed");
+		goto error;
+	}
+
+	/* Initialize MPI_Files. */
+
+	/* Initialize MPI_Windows. */
+
+	/* Initialize MPI_Attributes. */
+
+	/* Include a barrier here? */
+
+	/* Locks the runtime to set the mpi_state again. */
+	spinlock_lock(&_runtime_lock);
+
+		_mpi_state = MPI_STATE_INITIALIZED;
+
+	spinlock_unlock(&_runtime_lock);
+
 	return (MPI_SUCCESS);
+
+error:
+	return (ret);
 }
 
 /**
