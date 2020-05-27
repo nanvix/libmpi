@@ -26,6 +26,7 @@
 #include <nanvix/ulib.h>
 #include <posix/errno.h>
 #include <mpi/errhandler.h>
+#include <mpi/communicator.h>
 
 PRIVATE void mpi_errhandler_construct(mpi_errhandler_t *);
 PRIVATE void mpi_errhandler_destruct(mpi_errhandler_t *);
