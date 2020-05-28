@@ -28,6 +28,7 @@
 #include <mputil/object.h>
 #include <mpi/group.h>
 #include <mpi/communicator.h>
+#include <mpi/errhandler.h>
 #include <mpi.h>
 
 /**
@@ -36,11 +37,15 @@
 int __main2(int argc, const char *argv[])
 {
 	mpi_process_t *local;
-	mpi_group_t *group;
+	MPI_Group group;
 	UNUSED(argc);
 	UNUSED(argv);
 
 	uprintf("---------------------------------------------");
+
+	uassert(mpi_errhandler_init() == 0);
+
+	uprintf("Error handling system initialized");
 
 	uassert(mpi_proc_init() == 0);
 
@@ -105,6 +110,10 @@ int __main2(int argc, const char *argv[])
 	uassert(mpi_proc_finalize() == 0);
 
 	uprintf("Proc system finalized");
+
+	uassert(mpi_errhandler_finalize() == 0);
+
+	uprintf("Error handling system finalized");
 
 	uprintf("Successful!");
 

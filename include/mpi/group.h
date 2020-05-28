@@ -25,7 +25,6 @@
 #ifndef NANVIX_MPI_GROUP_H_
 #define NANVIX_MPI_GROUP_H_
 
-#include <nanvix/hal.h>
 #include <mputil/object.h>
 #include <mputil/proc.h>
 #include <mpi.h>
