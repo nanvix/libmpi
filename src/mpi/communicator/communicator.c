@@ -131,11 +131,11 @@ PUBLIC int mpi_comm_group(mpi_communicator_t *comm, mpi_group_t **group)
 {
 	/* Bad communicator. */
 	if (comm == NULL)
-		return (-EINVAL);
+		return (MPI_ERR_COMM);
 
 	/* Bad group receptor. */
 	if (group == NULL)
-		return (-EINVAL);
+		return (MPI_ERR_ARG);
 
 	/* Increments the group reference counter. */
 	OBJ_RETAIN(comm->group);
