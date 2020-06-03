@@ -71,8 +71,8 @@ OBJ_CLASS_DECLARATION(mpi_errhandler_t);
 #define MPI_CHECK_INIT_FINALIZE(name)				             \
 	{		                                                     \
 		int state = _mpi_state;		                             \
-		if ((state < OMPI_MPI_STATE_INITIALIZED) ||	             \
-		    (state >= OMPI_MPI_STATE_FINALIZE_STARTED)) {	     \
+		if ((state < MPI_STATE_INITIALIZED) ||		             \
+		    (state >= MPI_STATE_FINALIZE_STARTED)) {		     \
 			mpi_errors_are_fatal_comm_handler(NULL, NULL, name); \
 		}	                                                     \
 	}

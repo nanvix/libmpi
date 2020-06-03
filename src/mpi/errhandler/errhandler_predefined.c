@@ -57,7 +57,7 @@ PUBLIC void mpi_errors_are_fatal_comm_handler(mpi_communicator_t **comm,
 	else
 	{
 		/* Error occured before Init / after Finalize. Abort only locally. */
-		backend_abort(&_mpi_comm_self, errcode, arglist);
+		backend_abort(NULL, errcode, arglist);
 	}
 }
 
