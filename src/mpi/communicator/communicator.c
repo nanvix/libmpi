@@ -26,6 +26,7 @@
 #include <nanvix/ulib.h>
 #include <posix/errno.h>
 #include <mpi/communicator.h>
+#include <mpi/mpiruntime.h>
 
 PRIVATE void mpi_comm_construct(mpi_communicator_t *);
 PRIVATE void mpi_comm_destruct(mpi_communicator_t *);
@@ -120,7 +121,7 @@ PUBLIC int mpi_comm_free(mpi_communicator_t **comm)
 	OBJ_RELEASE(comm);
 	*comm = MPI_COMM_NULL;
 
-	return (0);
+	return (MPI_SUCCESS);
 }
 
 /**
@@ -140,7 +141,7 @@ PUBLIC int mpi_comm_group(mpi_communicator_t *comm, mpi_group_t **group)
 	OBJ_RETAIN(comm->group);
 	*group = comm->group;
 
-	return (0);
+	return (MPI_SUCCESS);
 }
 
 /**
@@ -194,8 +195,8 @@ PUBLIC int mpi_comm_init(void)
 	if (group->procs == NULL)
 		return (-ENOMEM);
 
-	group->size = 1;
-	group->procs[0] = process_local();
+	group->size   = 1;
+	*group->procs = process_local();
 
 	mpi_group_increment_proc_count(group);
 	mpi_group_set_rank(group, process_local());
@@ -215,7 +216,7 @@ PUBLIC int mpi_comm_init(void)
 	_mpi_comm_null.error_handler = MPI_ERRORS_ARE_FATAL;
 	OBJ_RETAIN(_mpi_comm_null.error_handler);
 	
-	return (0);
+	return (MPI_SUCCESS);
 }
 
 /**
@@ -225,8 +226,8 @@ PUBLIC int mpi_comm_init(void)
  */
 PUBLIC int mpi_comm_finalize(void)
 {
-	/* Destruct MPI_COMM_SELF. */
-	OBJ_DESTRUCT(&_mpi_comm_self);
+	/* Grants that MPI_COMM_SELF was already destructed. */
+	uassert(_mpi_state == MPI_STATE_FINALIZE_DESTRUCT_COMM_SELF);
 
 	/* Destruct MPI_COMM_WORLD. */
 	OBJ_DESTRUCT(&_mpi_comm_world);
@@ -234,5 +235,16 @@ PUBLIC int mpi_comm_finalize(void)
 	/* Destruct MPI_COMM_NULL. */
 	OBJ_DESTRUCT(&_mpi_comm_null);
 
-	return (0);
+	return (MPI_SUCCESS);
+}
+
+/**
+ * @see mpi_destruct_comm_self() at communicator.h.
+ */
+PUBLIC int mpi_destruct_comm_self(void)
+{
+	/* Destruct MPI_COMM_SELF. */
+	OBJ_DESTRUCT(&_mpi_comm_self);
+
+	return (MPI_SUCCESS);
 }
