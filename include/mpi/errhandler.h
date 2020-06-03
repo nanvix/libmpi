@@ -85,11 +85,11 @@ OBJ_CLASS_DECLARATION(mpi_errhandler_t);
  * @param message    Aditional error message.
  */
 #define MPI_ERRHANDLER_INVOKE(mpi_object, errcode, message)	      \
-	mpi_errhandler_invoke(mpi_object->error_handler,              \
-	                      mpi_object,                             \
-	                      (int)(mpi_object->errhandler_type),     \
+	mpi_errhandler_invoke((mpi_object)->error_handler,            \
+	                      (mpi_object),                           \
+	                      (int)((mpi_object)->errhandler_type),   \
 	                      errcode, message                        \
-	);
+	)
 
 /**
  * @brief Conditionally invokes an MPI error handler.
