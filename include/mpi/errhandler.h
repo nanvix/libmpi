@@ -104,38 +104,12 @@ OBJ_CLASS_DECLARATION(mpi_errhandler_t);
  */
 #define MPI_ERRHANDLER_CHECK(rc, mpi_object, errcode, message) 			\
 	if (rc != MPI_SUCCESS) {                                        	\
-		mpi_errhandler_invoke(mpi_object->error_handler,                \
-		                      mpi_object,                               \
-		                      (int)mpi_object->errhandler_type,         \
+		mpi_errhandler_invoke((mpi_object)->error_handler,              \
+		                      (mpi_object),                             \
+		                      (int)(mpi_object)->errhandler_type,       \
 		                      errcode, message                          \
 		);                                                              \
 		return (errcode);                                               \
-	}
-
-/**
- * @brief Conditionally invokes an MPI error handler.
- *
- * @param rc         The return code to be checked.
- * @param mpi_object The MPI object to invoke the errhandler.
- * @param errcode    The error code to be returned.
- * @param message    Aditional error message.
- *
- * @note This macro will invoke the error handler if the return
- * code is not MPI_SUCCESS.
- *
- * @returns Upon successful completion, MPI_SUCCESS is returned. If
- * the error handler was invoked, @p errorcode is returned.
- */
-#define OMPI_ERRHANDLER_RETURN(rc, mpi_object, err_code, message)		\
-	if (rc != MPI_SUCCESS) {	                                        \
-		mpi_errhandler_invoke(mpi_object->error_handler,                \
-		                      mpi_object,                               \
-		                      (int)mpi_object->errhandler_type,         \
-		                      errcode, message                          \
-		);                                                              \
-		return (errcode);                                               \
-	} else {	                                                        \
-		return MPI_SUCCESS;                                             \
 	}
 
 /**

@@ -195,9 +195,9 @@ PUBLIC int mpi_group_free(mpi_group_t ** group)
 {
 	/* Bad group. */
 	if (*group == NULL)
-		return (-EINVAL);
+		return (MPI_ERR_GROUP);
 
-	OBJ_RELEASE(group);
+	OBJ_RELEASE(*group);
 	*group = MPI_GROUP_NULL;
 
 	return (0);

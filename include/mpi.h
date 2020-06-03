@@ -220,11 +220,12 @@ extern int MPI_Comm_rank(MPI_Comm comm, int *rank);
 extern int MPI_Comm_size(MPI_Comm comm, int *size);
 extern int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler);
 extern int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
-extern int MPI_Error_string(int errorcode, char *string, int *resultlen);
+extern int MPI_Errhandler_free(MPI_Errhandler *errhandler);
 extern int MPI_Finalize(void);
 extern int MPI_Finalized(int *flag);
 extern int MPI_Group_rank(MPI_Group group, int *rank);
 extern int MPI_Group_size(MPI_Group group, int *size);
+extern int MPI_Group_free(MPI_Group *group);
 extern int MPI_Init(int *argc, char ***argv);
 extern int MPI_Initialized(int *flag);
 
