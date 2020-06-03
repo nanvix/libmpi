@@ -98,6 +98,14 @@ extern mpi_process_t * process_lookup(const char* name);
 extern int mpi_proc_count(void);
 
 /**
+ * @brief Waits on the MPI std_fence.
+ *
+ * @returns Upon successful completion, zero is returned. A negative
+ * error code is returned instead.
+ */
+extern int mpi_std_fence(void);
+
+/**
  * @brief Initializes the processes submodule.
  *
  * @returns Upon successful completion, zero is returned. A
