@@ -47,7 +47,7 @@ PUBLIC int MPI_Group_rank(MPI_Group group, int *rank)
 	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
 
 	/* Bad group. */
-	if ((group == MPI_GROUP_NULL) || (group == NULL))
+	if ((group == NULL) || (group == MPI_GROUP_NULL))
 		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, FUNC_NAME));
 
 	/* Bad rank holder. */

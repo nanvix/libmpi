@@ -49,7 +49,7 @@ PUBLIC int MPI_Comm_group(MPI_Comm comm, MPI_Group *group)
 		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME));
 
 	/* Bad group holder. */
-	if (group == NULL)
+	if ((group == NULL) || (*group == NULL) || (*group == MPI_GROUP_NULL))
 		return (MPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME));
 
 	ret = mpi_comm_group((mpi_communicator_t *) comm, (mpi_group_t **) group);
