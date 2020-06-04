@@ -27,7 +27,7 @@
 #include <mpi/communicator.h>
 #include <mpi.h>
 
-static const char FUNC_NAME[] = "MPI_Initialized";
+static const char FUNC_NAME[] = "MPI_Finalized";
 
 /**
  * @brief Determines whether MPI_Finalized() was already called or not.
