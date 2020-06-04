@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+#include <nanvix/hal.h>
 #include <nanvix/ulib.h>
-#include <mputil/proc.h>
 #include <mpi.h>
 
 /**
@@ -34,7 +34,6 @@ int __main2(int argc, char *argv[])
 	int flag;
 	int rank, rank2;
 	int size, size2;
-	mpi_process_t *local;
 	MPI_Group group;
 	MPI_Errhandler errhandler;
 
@@ -52,6 +51,7 @@ int __main2(int argc, char *argv[])
 	uprintf("Asserted Not finalized");
 
 	MPI_Init(&argc, &argv);
+	uprintf("Init successful!");
 
 	MPI_Initialized(&flag);
 	uassert(flag);
@@ -61,41 +61,28 @@ int __main2(int argc, char *argv[])
 	uassert(!flag);
 	uprintf("Asserted Not finalized");
 
-	local = process_local();
-
-	uprintf("Init successful!");
-
-	uassert(process_nodenum(local) == cluster_get_num());
-
-	uprintf("Asserted local process");
-
-	MPI_Comm_group(MPI_COMM_SELF, &group);
+	MPI_Comm_group(MPI_COMM_WORLD, &group);
 
 	uassert(group != MPI_GROUP_EMPTY);
 
 	uprintf("Group asserted");
 
 	MPI_Group_rank(group, &rank);
-	uassert(rank == 0);
+	uassert(rank == cluster_get_num());
 
 	uprintf("Group rank asserted");
 
-	MPI_Comm_rank(MPI_COMM_SELF, &rank2);
-	uassert(rank == rank2);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank2);
+	uassert(rank2 == cluster_get_num());
 
 	uprintf("Comm rank asserted");
 
 	MPI_Group_size(group, &size);
-	uassert(size == 1);
+	uassert(size == PROCESSOR_CLUSTERS_NUM);
 
 	uprintf("Group size asserted");
 
-	MPI_Group_free(&group);
-
-	MPI_Comm_group(MPI_COMM_WORLD, &group);
-
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	MPI_Group_size(group, &size2);
+	MPI_Comm_size(MPI_COMM_WORLD, &size2);
 
 	uassert(size == size2);
 	uprintf("Asserted MPI_Comm_size");
@@ -105,8 +92,6 @@ int __main2(int argc, char *argv[])
 	uassert(group == MPI_GROUP_NULL);
 
 	uprintf("NULL Group asserted");
-
-	local = process_lookup("nanvix-process-0");
 
 	MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhandler);
 
@@ -129,10 +114,6 @@ int __main2(int argc, char *argv[])
 	uassert(errhandler == MPI_ERRHANDLER_NULL);
 
 	uprintf("MPI_ERRHANDLER_NULL asserted");
-
-	uassert(local == process_local());
-
-	uprintf("Asserted lookup");
 
 	MPI_Finalize();
 
