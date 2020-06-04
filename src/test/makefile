@@ -39,6 +39,7 @@ LIBS += $(LIBDIR)/$(LIBKERNEL)
 LIBS += -Wl,--no-whole-archive
 LIBS += $(LIBDIR)/$(LIBC)
 LIBS += $(LIBDIR)/$(LIBNANVIX)
+LIBS += $(LIBDIR)/$(LIBRUNTIME)
 ifneq ($(LIBLWIP),)
 LIBS += $(LIBDIR)/$(LIBLWIP)
 endif

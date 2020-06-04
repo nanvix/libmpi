@@ -22,9 +22,6 @@ lib/
 
 # KLib Headers
 include/nanvix/barelib.h
-include/posix/decl.h
-include/posix/stdarg.h
-include/posix/stddef.h
 
 # HAL Headers
 include/arch/
@@ -38,12 +35,16 @@ include/nanvix/hlib.h
 include/posix/sys/_intsup.h
 include/posix/sys/features.h
 include/posix/sys/types.h
+include/posix/sys/stat.h
 include/posix/decl.h
 include/posix/errno.h
+include/posix/fcntl.h
 include/posix/stdarg.h
 include/posix/stdbool.h
 include/posix/stddef.h
 include/posix/stdint.h
+include/posix/stdlib.h
+include/posix/unistd.h
 
 # Kernel Headers
 include/dev/
@@ -52,9 +53,24 @@ include/nanvix/kernel/
 # Nanvix Library
 include/nanvix/runtime/
 include/nanvix/sys/
+include/nanvix/config
+include/nanvix/limits
+include/nanvix/servers
+include/nanvix/types
 
 # C Library
 include/nanvix/ulib.h
+
+# File system library
+include/fs
+include/nanvix/fs.h
+
+# Runtime libraries
+include/nanvix/config.h
+include/nanvix/dev.h
+include/nanvix/limits.h
+include/nanvix/pm.h
+include/nanvix/types.h
 
 # Excludes
 !img/*.img

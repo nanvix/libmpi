@@ -43,6 +43,7 @@ install: | all-target install-headers
 	@cp -f $(LIBDIR)/libkernel*.a $(LIBDIR)/liblwip*.a $(PREFIX)/lib 2>/dev/null || :
 	@cp -f $(LIBDIR)/libnanvix*.a $(PREFIX)/lib
 	@cp -f $(LIBDIR)/libc*.a $(PREFIX)/lib
+	@cp -f $(LIBDIR)/libruntime*.a $(PREFIX)/lib
 	@cp -f $(LIBDIR)/libmpi*.a $(PREFIX)/lib
 	@echo [CP] $(PREFIX)/lib/barelib*.a
 	@echo [CP] $(PREFIX)/lib/libhal*.a
@@ -50,6 +51,7 @@ install: | all-target install-headers
 	@echo [CP] $(PREFIX)/lib/liblwip*.a
 	@echo [CP] $(PREFIX)/lib/libnanvix*.a
 	@echo [CP] $(PREFIX)/lib/libc*.a
+	@echo [CP] $(PREFIX)/lib/libruntime*.a
 	@echo [RM] $(PREFIX)/lib/libmpi*.a
 	@echo "==============================================================================="
 	@echo "Nanvix Libmpi Successfully Installed"
@@ -67,6 +69,7 @@ uninstall: | distclean uninstall-headers
 	@rm -f $(PREFIX)/lib/libkernel*.a $(PREFIX)/lib/liblwip*.a
 	@rm -f $(PREFIX)/lib/libnanvix*.a
 	@rm -f $(PREFIX)/lib/libc*.a
+	@rm -f $(PREFIX)/lib/libruntime*.a
 	@rm -f $(PREFIX)/lib/libmpi*.a
 	@echo [RM] $(PREFIX)/lib/barelib*.a
 	@echo [RM] $(PREFIX)/lib/libhal*.a
@@ -74,6 +77,7 @@ uninstall: | distclean uninstall-headers
 	@echo [RM] $(PREFIX)/lib/liblwip*.a
 	@echo [RM] $(PREFIX)/lib/libnanvix*.a
 	@echo [RM] $(PREFIX)/lib/libc*.a
+	@echo [RM] $(PREFIX)/lib/libruntime*.a
 	@echo [RM] $(PREFIX)/lib/libmpi*.a
 	@echo "==============================================================================="
 	@echo "Nanvix Libmpi Successfully Uninstalled"

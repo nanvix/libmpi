@@ -23,37 +23,37 @@
 #
 
 # Builds contrib.
-contrib: contrib-ulibc
+contrib: contrib-multikernel
 
 # Builds contrib headers.
-contrib-headers: contrib-headers-ulibc
+contrib-headers: contrib-headers-multikernel
 
 # Cleans contrib.
-contrib-uninstall: contrib-uninstall-ulibc
+contrib-uninstall: contrib-uninstall-multikernel
 
 # Cleans contrib headers.
-contrib-uninstall-headers: contrib-uninstall-headers-ulibc
+contrib-uninstall-headers: contrib-uninstall-headers-multikernel
 
 #===============================================================================
 # Nanvix Library
 #===============================================================================
 
 # Builds Nanvix Library.
-contrib-ulibc: make-dirs
-	$(MAKE) -C $(CONTRIBDIR)/ulibc contrib RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/ulibc install PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+contrib-multikernel: make-dirs
+	$(MAKE) -C $(CONTRIBDIR)/multikernel contrib RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/multikernel install PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
 
 # Builds Nanvix Library headers.
-contrib-headers-ulibc: make-dirs
-	$(MAKE) -C $(CONTRIBDIR)/ulibc contrib-headers RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/ulibc install-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+contrib-headers-multikernel: make-dirs
+	$(MAKE) -C $(CONTRIBDIR)/multikernel contrib-headers RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/multikernel install-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
 
 # Cleans Nanvix Library.
-contrib-uninstall-ulibc:
-	$(MAKE) -C $(CONTRIBDIR)/ulibc uninstall PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/ulibc contrib-uninstall RELEASE=$(RELEASE)
+contrib-uninstall-multikernel:
+	$(MAKE) -C $(CONTRIBDIR)/multikernel uninstall PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/multikernel contrib-uninstall RELEASE=$(RELEASE)
 
 # Cleans Nanvix Library headers.
-contrib-uninstall-headers-ulibc:
-	$(MAKE) -C $(CONTRIBDIR)/ulibc uninstall-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/ulibc contrib-uninstall-headers RELEASE=$(RELEASE)
+contrib-uninstall-headers-multikernel:
+	$(MAKE) -C $(CONTRIBDIR)/multikernel uninstall-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/multikernel contrib-uninstall-headers RELEASE=$(RELEASE)
