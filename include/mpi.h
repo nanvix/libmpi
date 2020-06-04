@@ -209,7 +209,7 @@ extern struct mpi_errhandler_t _mpi_errhandler_null;
  */
 #define MPI_GROUP_NULL      &_mpi_group_null
 #define MPI_COMM_NULL       &_mpi_comm_null
-#define MPI_ERRHANDLER_NULL &_mpi_errhandler_null;
+#define MPI_ERRHANDLER_NULL &_mpi_errhandler_null
 
 /**
  * @brief MPI_Functions declaration.

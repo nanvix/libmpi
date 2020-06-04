@@ -106,6 +106,21 @@ PUBLIC int mpi_errhandler_invoke(mpi_errhandler_t *errhandler, void *mpi_object,
 }
 
 /**
+ * @see mpi_errhandler_free() at errhandler.h.
+ */
+PUBLIC int mpi_errhandler_free(mpi_errhandler_t ** errhandler)
+{
+	/* Bad error handler. */
+	if (*errhandler == NULL)
+		return (MPI_ERR_ARG);
+
+	OBJ_RELEASE(*errhandler);
+	*errhandler = MPI_ERRHANDLER_NULL;
+
+	return (MPI_SUCCESS);
+}
+
+/**
  * @see mpi_errhandler_init() at errhandler.h.
  */
 PUBLIC int mpi_errhandler_init(void)

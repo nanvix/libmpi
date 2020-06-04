@@ -113,6 +113,16 @@ OBJ_CLASS_DECLARATION(mpi_errhandler_t);
 	}
 
 /**
+ * @brief Frees the specified error handler.
+ *
+ * @param errhandler The error handler to be freed.
+ *
+ * @returns Upon successful completion, zero is returned. An error code is
+ * returned instead.
+ */
+extern int mpi_errhandler_free(mpi_errhandler_t ** errhandler);
+
+/**
  * @brief Invokes an object error handler.
  *
  * @param errhandler The error handler to invoke.
