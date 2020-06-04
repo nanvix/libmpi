@@ -62,12 +62,13 @@ export TOOLSDIR   := $(ROOTDIR)/utils
 #===============================================================================
 
 # Libraries
-export BARELIB   := barelib-$(TARGET).a
-export LIBHAL    := libhal-$(TARGET).a
-export LIBKERNEL := libkernel-$(TARGET).a
-export LIBNANVIX := libnanvix-$(TARGET).a
-export LIBC      := libc-$(TARGET).a
-export LIBMPI    := libmpi-$(TARGET).a
+export BARELIB    := barelib-$(TARGET).a
+export LIBHAL     := libhal-$(TARGET).a
+export LIBKERNEL  := libkernel-$(TARGET).a
+export LIBNANVIX  := libnanvix-$(TARGET).a
+export LIBC       := libc-$(TARGET).a
+export LIBRUNTIME := libruntime-$(TARGET).a
+export LIBMPI     := libmpi-$(TARGET).a
 
 # Binaries
 export EXEC := test-driver.$(TARGET)
