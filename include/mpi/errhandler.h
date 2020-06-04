@@ -71,8 +71,8 @@ OBJ_CLASS_DECLARATION(mpi_errhandler_t);
 #define MPI_CHECK_INIT_FINALIZE(name)				             \
 	{		                                                     \
 		int state = _mpi_state;		                             \
-		if ((state < OMPI_MPI_STATE_INITIALIZED) ||	             \
-		    (state >= OMPI_MPI_STATE_FINALIZE_STARTED)) {	     \
+		if ((state < MPI_STATE_INITIALIZED) ||		             \
+		    (state >= MPI_STATE_FINALIZE_STARTED)) {		     \
 			mpi_errors_are_fatal_comm_handler(NULL, NULL, name); \
 		}	                                                     \
 	}
@@ -85,11 +85,11 @@ OBJ_CLASS_DECLARATION(mpi_errhandler_t);
  * @param message    Aditional error message.
  */
 #define MPI_ERRHANDLER_INVOKE(mpi_object, errcode, message)	      \
-	mpi_errhandler_invoke(mpi_object->error_handler,              \
-	                      mpi_object,                             \
-	                      (int)(mpi_object->errhandler_type),     \
+	mpi_errhandler_invoke((mpi_object)->error_handler,            \
+	                      (mpi_object),                           \
+	                      (int)((mpi_object)->errhandler_type),   \
 	                      errcode, message                        \
-	);
+	)
 
 /**
  * @brief Conditionally invokes an MPI error handler.
@@ -104,39 +104,23 @@ OBJ_CLASS_DECLARATION(mpi_errhandler_t);
  */
 #define MPI_ERRHANDLER_CHECK(rc, mpi_object, errcode, message) 			\
 	if (rc != MPI_SUCCESS) {                                        	\
-		mpi_errhandler_invoke(mpi_object->error_handler,                \
-		                      mpi_object,                               \
-		                      (int)mpi_object->errhandler_type,         \
+		mpi_errhandler_invoke((mpi_object)->error_handler,              \
+		                      (mpi_object),                             \
+		                      (int)(mpi_object)->errhandler_type,       \
 		                      errcode, message                          \
 		);                                                              \
 		return (errcode);                                               \
 	}
 
 /**
- * @brief Conditionally invokes an MPI error handler.
+ * @brief Frees the specified error handler.
  *
- * @param rc         The return code to be checked.
- * @param mpi_object The MPI object to invoke the errhandler.
- * @param errcode    The error code to be returned.
- * @param message    Aditional error message.
+ * @param errhandler The error handler to be freed.
  *
- * @note This macro will invoke the error handler if the return
- * code is not MPI_SUCCESS.
- *
- * @returns Upon successful completion, MPI_SUCCESS is returned. If
- * the error handler was invoked, @p errorcode is returned.
+ * @returns Upon successful completion, zero is returned. An error code is
+ * returned instead.
  */
-#define OMPI_ERRHANDLER_RETURN(rc, mpi_object, err_code, message)		\
-	if (rc != MPI_SUCCESS) {	                                        \
-		mpi_errhandler_invoke(mpi_object->error_handler,                \
-		                      mpi_object,                               \
-		                      (int)mpi_object->errhandler_type,         \
-		                      errcode, message                          \
-		);                                                              \
-		return (errcode);                                               \
-	} else {	                                                        \
-		return MPI_SUCCESS;                                             \
-	}
+extern int mpi_errhandler_free(mpi_errhandler_t ** errhandler);
 
 /**
  * @brief Invokes an object error handler.

@@ -23,97 +23,128 @@
  */
 
 #include <nanvix/ulib.h>
-#include <mputil/ptr_array.h>
 #include <mputil/proc.h>
-#include <mputil/object.h>
-#include <mpi/group.h>
-#include <mpi/communicator.h>
-#include <mpi/errhandler.h>
 #include <mpi.h>
 
 /**
  * @brief Dummy test driver.
  */
-int __main2(int argc, const char *argv[])
+int __main2(int argc, char *argv[])
 {
+	int flag;
+	int rank, rank2;
+	int size, size2;
 	mpi_process_t *local;
 	MPI_Group group;
+	MPI_Errhandler errhandler;
+
 	UNUSED(argc);
 	UNUSED(argv);
 
 	uprintf("---------------------------------------------");
 
-	uassert(mpi_errhandler_init() == 0);
+	MPI_Initialized(&flag);
+	uassert(!flag);
+	uprintf("Asserted Not initialized");
 
-	uprintf("Error handling system initialized");
+	MPI_Finalized(&flag);
+	uassert(!flag);
+	uprintf("Asserted Not finalized");
 
-	uassert(mpi_proc_init() == 0);
+	MPI_Init(&argc, &argv);
 
-	uprintf("Proc system initialized");
+	MPI_Initialized(&flag);
+	uassert(flag);
+	uprintf("Asserted initialization");
+
+	MPI_Finalized(&flag);
+	uassert(!flag);
+	uprintf("Asserted Not finalized");
 
 	local = process_local();
+
+	uprintf("Init successful!");
 
 	uassert(process_nodenum(local) == cluster_get_num());
 
 	uprintf("Asserted local process");
 
-	uassert(mpi_group_init() == 0);
-
-	uprintf("Group system initialized");
-
-	group = mpi_group_allocate(2);
-
-	uassert(mpi_group_rank(group) == MPI_UNDEFINED);
-
-	mpi_group_set_rank(group, process_lookup("nanvix-process-0"));
-
-	uassert(mpi_group_rank(group) == MPI_UNDEFINED);
-
-	uprintf("Set Rank asserted");
+	MPI_Comm_group(MPI_COMM_SELF, &group);
 
 	uassert(group != MPI_GROUP_EMPTY);
 
 	uprintf("Group asserted");
 
-	mpi_group_free(&group);
+	MPI_Group_rank(group, &rank);
+	uassert(rank == 0);
+
+	uprintf("Group rank asserted");
+
+	MPI_Comm_rank(MPI_COMM_SELF, &rank2);
+	uassert(rank == rank2);
+
+	uprintf("Comm rank asserted");
+
+	MPI_Group_size(group, &size);
+	uassert(size == 1);
+
+	uprintf("Group size asserted");
+
+	MPI_Group_free(&group);
+
+	MPI_Comm_group(MPI_COMM_WORLD, &group);
+
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Group_size(group, &size2);
+
+	uassert(size == size2);
+	uprintf("Asserted MPI_Comm_size");
+
+	MPI_Group_free(&group);
 
 	uassert(group == MPI_GROUP_NULL);
 
 	uprintf("NULL Group asserted");
 
-	group = mpi_group_allocate(0);
-
-	uassert(group == MPI_GROUP_EMPTY);
-
-	uprintf("EMPTY Group asserted");
-
-	mpi_group_free(&group);
-
-	mpi_comm_init();
-
-	uprintf("Communicators initialized");
-
-	mpi_comm_finalize();
-
-	uprintf("Communicators finalized");
-
-	uassert(mpi_group_finalize() == 0);
-
-	uprintf("Group system finalized");
-
 	local = process_lookup("nanvix-process-0");
+
+	MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhandler);
+
+	uassert(errhandler == MPI_ERRORS_ARE_FATAL);
+
+	uprintf("COMM_WORLD errorhandler asserted");
+
+	MPI_Errhandler_free(&errhandler);
+
+	MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ABORT);
+
+	MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhandler);
+
+	uassert(errhandler == MPI_ERRORS_ABORT);
+
+	uprintf("Asserted Comm_set_errhandler");
+
+	MPI_Errhandler_free(&errhandler);
+
+	uassert(errhandler == MPI_ERRHANDLER_NULL);
+
+	uprintf("MPI_ERRHANDLER_NULL asserted");
 
 	uassert(local == process_local());
 
 	uprintf("Asserted lookup");
 
-	uassert(mpi_proc_finalize() == 0);
+	MPI_Finalize();
 
-	uprintf("Proc system finalized");
+	uprintf("Finalize Successful");
 
-	uassert(mpi_errhandler_finalize() == 0);
+	MPI_Initialized(&flag);
+	uassert(flag);
+	uprintf("Asserted initialization");
 
-	uprintf("Error handling system finalized");
+	MPI_Finalized(&flag);
+	uassert(flag);
+	uprintf("Asserted finalized");
 
 	uprintf("Successful!");
 

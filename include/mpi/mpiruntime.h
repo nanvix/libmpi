@@ -40,6 +40,7 @@ typedef enum {
 	MPI_STATE_INIT_STARTED,
 	MPI_STATE_INITIALIZED,
 	MPI_STATE_FINALIZE_STARTED,
+	MPI_STATE_FINALIZE_DESTRUCT_COMM_SELF,
 	MPI_STATE_FINALIZED
 } mpi_state_t;
 
@@ -51,16 +52,21 @@ extern mpi_state_t _mpi_state;
 /**
  * @brief Initializes the MPI runtime.
  *
+ * @param argc Number of arguments in @p argv.
+ * @param argv Program arguments.
+ *
  * @returns Upon successful completion, MPI_SUCCESS is returned. A
  * negative error code is returned instead.
  */
-extern int mpi_init(void);
+extern int mpi_init(int argc, char **argv);
 
 /**
  * @brief Finalizes the MPI runtime.
  *
  * @returns Upon successful completion, MPI_SUCCESS is returned. A
  * negative error code is returned instead.
+ *
+ * @note All objects marked for deletion are freed here.
  */
 extern int mpi_finalize(void);
 

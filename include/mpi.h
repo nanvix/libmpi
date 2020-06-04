@@ -209,6 +209,24 @@ extern struct mpi_errhandler_t _mpi_errhandler_null;
  */
 #define MPI_GROUP_NULL      &_mpi_group_null
 #define MPI_COMM_NULL       &_mpi_comm_null
-#define MPI_ERRHANDLER_NULL &_mpi_errhandler_null;
+#define MPI_ERRHANDLER_NULL &_mpi_errhandler_null
+
+/**
+ * @brief MPI_Functions declaration.
+ */
+extern int MPI_Abort(MPI_Comm comm, int errorcode);
+extern int MPI_Comm_group(MPI_Comm comm, MPI_Group *group);
+extern int MPI_Comm_rank(MPI_Comm comm, int *rank);
+extern int MPI_Comm_size(MPI_Comm comm, int *size);
+extern int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler);
+extern int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
+extern int MPI_Errhandler_free(MPI_Errhandler *errhandler);
+extern int MPI_Finalize(void);
+extern int MPI_Finalized(int *flag);
+extern int MPI_Group_rank(MPI_Group group, int *rank);
+extern int MPI_Group_size(MPI_Group group, int *size);
+extern int MPI_Group_free(MPI_Group *group);
+extern int MPI_Init(int *argc, char ***argv);
+extern int MPI_Initialized(int *flag);
 
 #endif /* NANVIX_LIBMPI_H_ */

@@ -24,6 +24,7 @@
 
 #include <nanvix/hlib.h>
 #include <nanvix/ulib.h>
+#include <nanvix/runtime/barrier.h>
 #include <posix/errno.h>
 #include <mputil/proc.h>
 #include <mputil/ptr_array.h>
@@ -38,7 +39,14 @@ OBJ_CLASS_INSTANCE(mpi_process_t, &process_construct, &process_destruct, sizeof(
  *
  * @note Instead a #define, this variable should be initialized in execution time.
  */
-static int _processes_nr = PROCESSOR_CLUSTERS_NUM;
+PRIVATE int _processes_nr = PROCESSOR_CLUSTERS_NUM;
+
+PRIVATE int _active_nodes[PROCESSOR_CLUSTERS_NUM];
+
+/* @note Const barrier parameter workaround. */
+PRIVATE const int *_active_nodes_addr = _active_nodes;
+
+PRIVATE barrier_t _std_barrier = BARRIER_NULL;
 
 /**
  * @brief Processes list.
@@ -97,8 +105,11 @@ PUBLIC int process_allocate(int nodeid)
 		return (-ENOMEM);
 
 	/* Inserts the process in the processes list. */
-	if ((ret = pointer_array_insert(&_processes_list, proc)) < 0)
+	if ((ret = pointer_array_insert(&_processes_list, (void *) proc)) < 0)
+	{
 		OBJ_RELEASE(proc);
+		return (ret);
+	}
 
 	/* Initializes the process info. */
 	proc->pid     = ret;
@@ -160,6 +171,18 @@ PUBLIC int mpi_proc_count(void)
 }
 
 /**
+ * @see mpi_std_fence() in proc.h.
+ */
+PUBLIC int mpi_std_fence(void)
+{
+	/* Checks if the proc system was already initialized. */
+	if (!BARRIER_IS_VALID(_std_barrier))
+		return (-EINVAL);
+
+	return (barrier_wait(_std_barrier));
+}
+
+/**
  * @brief Initializes the processes submodule.
  *
  * @returns Upon successful completion, zero is returned. A
@@ -168,6 +191,15 @@ PUBLIC int mpi_proc_count(void)
 PUBLIC int mpi_proc_init(void)
 {
 	int ret; /* Function return. */
+
+	/* Initializes list of nodes for stdbarrier. */
+	for (int i = 0; i < _processes_nr; ++i)
+		_active_nodes[i] = i;
+
+	/* Initializes the std_barrier. */
+	_std_barrier = barrier_create(_active_nodes_addr, _processes_nr);
+	if (!BARRIER_IS_VALID(_std_barrier))
+		return (-ENOMEM);
 
 	/* Initializes the processes list. */
 	OBJ_CONSTRUCT(&_processes_list, pointer_array_t);
@@ -182,7 +214,7 @@ PUBLIC int mpi_proc_init(void)
 		uassert(process_allocate(i) == i);
 
 	/* Initializes local proc reference. */
-	_local_proc = pointer_array_get_item(&_processes_list, cluster_get_num());
+	_local_proc = (mpi_process_t *) pointer_array_get_item(&_processes_list, cluster_get_num());
 
 	uassert(_local_proc != NULL);
 
@@ -190,6 +222,9 @@ PUBLIC int mpi_proc_init(void)
 
 error:
 	OBJ_DESTRUCT(&_processes_list);
+
+	barrier_destroy(_std_barrier);
+
 	return (ret);
 }
 
@@ -225,6 +260,9 @@ PUBLIC int mpi_proc_finalize(void)
 
 	/* Releases the processes list. */
 	OBJ_DESTRUCT(&_processes_list);
+
+	/* Releases _std_barrier. */
+	barrier_destroy(_std_barrier);
 
 	return (0);
 }

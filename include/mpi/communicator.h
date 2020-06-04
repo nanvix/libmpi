@@ -149,4 +149,15 @@ extern int mpi_comm_init(void);
  */
 extern int mpi_comm_finalize(void);
 
+/**
+ * @brief Destructs MPI_COMM_SELF.
+ *
+ * @returns Upon successful completion, zero is returned. A
+ * negative error code is returned instead.
+ *
+ * @note This function is needed because MPI_COMM_SELF destruction must be
+ * the first action of MPI_Finalize.
+ */
+extern int mpi_destruct_comm_self(void);
+
 #endif /* NANVIX_MPI_COMMUNICATOR_H_ */

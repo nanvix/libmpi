@@ -45,10 +45,10 @@ PRIVATE void mpi_group_construct(mpi_group_t * group)
 {
 	uassert(group != NULL);
 
-    group->my_rank = -1;
-    group->procs   = NULL;
-    group->size    = -1;
-    group->parent  = NULL;
+	group->my_rank = -1;
+	group->procs   = NULL;
+	group->size    = -1;
+	group->parent  = NULL;
 }
 
 /**
@@ -56,16 +56,16 @@ PRIVATE void mpi_group_construct(mpi_group_t * group)
  */
 PRIVATE void mpi_group_destruct(mpi_group_t * group)
 {
-    uassert(group != NULL);
+	uassert(group != NULL);
 
-    if (group->procs != NULL)
-    {
-    	mpi_group_decrement_proc_count(group);
-    	ufree(group->procs);
-    }
+	if (group->procs != NULL)
+	{
+		mpi_group_decrement_proc_count(group);
+		ufree(&group->procs);
+	}
 
-    if (group->parent != NULL)
-    	OBJ_RELEASE(group->parent);
+	if (group->parent != NULL)
+		OBJ_RELEASE(group->parent);
 }
 
 /**
@@ -195,9 +195,9 @@ PUBLIC int mpi_group_free(mpi_group_t ** group)
 {
 	/* Bad group. */
 	if (*group == NULL)
-		return (-EINVAL);
+		return (MPI_ERR_GROUP);
 
-	OBJ_RELEASE(group);
+	OBJ_RELEASE(*group);
 	*group = MPI_GROUP_NULL;
 
 	return (0);
