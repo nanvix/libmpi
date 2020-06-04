@@ -45,11 +45,11 @@ PUBLIC int MPI_Group_size(MPI_Group group, int *size)
 
 	/* Bad group. */
 	if ((group == MPI_GROUP_NULL) || (group == NULL))
-		MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, FUNC_NAME));
 
 	/* Bad size holder. */
 	if (size == NULL)
-		MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME));
 
 	*size = mpi_group_size((mpi_group_t *) group);
 

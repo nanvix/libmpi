@@ -44,11 +44,11 @@ PUBLIC int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
 
 	/* Bad communicator. */
 	if ((comm == NULL) || (comm == MPI_COMM_NULL))
-		MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME));
 
 	/* Bad errhandler holder. */
 	if (errhandler == NULL)
-		MPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME));
 
 	*errhandler = comm->error_handler;
 	OBJ_RETAIN(comm->error_handler);

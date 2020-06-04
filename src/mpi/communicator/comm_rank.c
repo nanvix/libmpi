@@ -44,11 +44,11 @@ PUBLIC int MPI_Comm_rank(MPI_Comm comm, int *rank)
 
 	/* Bad communicator. */
 	if ((comm == NULL) || (comm == MPI_COMM_NULL))
-		MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME));
 
 	/* Bad rank holder. */
 	if (rank == NULL)
-		MPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME));
 
 	*rank = mpi_comm_rank((mpi_communicator_t *) comm);
 

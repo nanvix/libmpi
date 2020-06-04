@@ -44,11 +44,11 @@ PUBLIC int MPI_Comm_size(MPI_Comm comm, int *size)
 
 	/* Bad communicator. */
 	if ((comm == NULL) || (comm == MPI_COMM_NULL))
-		MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME));
 
 	/* Bad size holder. */
 	if (size == NULL)
-		MPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME));
 
 	*size = mpi_comm_size((mpi_communicator_t *) comm);
 

@@ -46,7 +46,7 @@ PUBLIC int MPI_Group_free(MPI_Group *group)
 
 	/* Bad group. */
 	if ((group == NULL) || (*group == MPI_GROUP_NULL) || (*group == NULL))
-		MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, FUNC_NAME));
 
 	ret = mpi_group_free((mpi_group_t **) group);
 

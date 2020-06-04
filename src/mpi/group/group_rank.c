@@ -48,11 +48,11 @@ PUBLIC int MPI_Group_rank(MPI_Group group, int *rank)
 
 	/* Bad group. */
 	if ((group == MPI_GROUP_NULL) || (group == NULL))
-		MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, FUNC_NAME));
 
 	/* Bad rank holder. */
 	if (rank == NULL)
-		MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME));
 
 	*rank = mpi_group_rank((mpi_group_t *) group);
 

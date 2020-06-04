@@ -45,7 +45,7 @@ PUBLIC int MPI_Errhandler_free(MPI_Errhandler *errhandler)
 
 	/* Bad error handler. */
 	if ((errhandler == NULL) || (*errhandler == NULL) || (*errhandler == MPI_ERRHANDLER_NULL))
-		MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME));
 
 	ret = mpi_errhandler_free((mpi_errhandler_t **) errhandler);
 
