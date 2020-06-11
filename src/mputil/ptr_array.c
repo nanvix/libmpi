@@ -303,7 +303,7 @@ PRIVATE int grow_table(pointer_array_t *array, int at_least)
 	
 	if (new_int != old_int)
 	{
-		p = (uint64_t *) realloc(array->used_bits, new_int * sizeof(uint64_t));
+		p = (uint64_t *) urealloc(array->used_bits, new_int * sizeof(uint64_t));
 		if (p == NULL)
 			return (-ENOMEM);
 

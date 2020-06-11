@@ -167,14 +167,11 @@ PUBLIC int mpi_finalize(void)
 	spinlock_unlock(&_runtime_lock);
 
 	/* Fence to ensure that everybody finalized communication. */
-	/* @todo Uncomment when spawning all clusters properly. */
-#if 0
 	if ((ret = mpi_std_fence()) != MPI_SUCCESS)
 	{
 		uprintf("ERROR!!! Could not ensure that all processes were finalized");
 		goto end;
 	}
-#endif
 
 	/* Start to finalize what were initialized in mpi_init in the reverse order. */
 
