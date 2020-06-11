@@ -27,6 +27,7 @@
 #include <posix/errno.h>
 #include <mpi/communicator.h>
 #include <mpi/mpiruntime.h>
+#include <nanvix/limits.h>
 
 PRIVATE void mpi_comm_construct(mpi_communicator_t *);
 PRIVATE void mpi_comm_destruct(mpi_communicator_t *);
@@ -153,29 +154,13 @@ PUBLIC int mpi_comm_group(mpi_communicator_t *comm, mpi_group_t **group)
 PUBLIC int mpi_comm_init(void)
 {
 	mpi_group_t *group;
-	size_t size;
-	char name[PROCESS_NAME_MAX_LENGTH];
-
-	/* Gets the number of active processes. */
-	size = mpi_proc_count();
 
 	/* Setup MPI_COMM_WORLD. */
 	OBJ_CONSTRUCT(&_mpi_comm_world, mpi_communicator_t);
 	group = OBJ_NEW(mpi_group_t);
 
-	group->procs = (mpi_process_t **) umalloc(size * sizeof(mpi_process_t *));
-	if (group->procs == NULL)
-		return (-ENOMEM);
-
-	group->size = size;
-
-	for (unsigned int i = 0; i < size; ++i)
-	{
-		usprintf(name, "nanvix-process-%d", i);
-		group->procs[i] = process_lookup(name);
-
-		uassert(group->procs[i] != NULL);
-	}
+	if ((group->procs = mpi_proc_world_list(&(group->size))) == NULL)
+		return (MPI_ERR_NO_MEM);
 
 	mpi_group_increment_proc_count(group);
 	mpi_group_set_rank(group, process_local());
@@ -191,12 +176,8 @@ PUBLIC int mpi_comm_init(void)
 	OBJ_CONSTRUCT(&_mpi_comm_self, mpi_communicator_t);
 	group = OBJ_NEW(mpi_group_t);
 
-	group->procs = (mpi_process_t **) umalloc(sizeof(mpi_process_t *));
-	if (group->procs == NULL)
-		return (-ENOMEM);
-
-	group->size   = 1;
-	*group->procs = process_local();
+	if ((group->procs = mpi_proc_self_list(&(group->size))) == NULL)
+		return (MPI_ERR_NO_MEM);
 
 	mpi_group_increment_proc_count(group);
 	mpi_group_set_rank(group, process_local());

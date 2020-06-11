@@ -22,12 +22,13 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hlib.h>
+#include <nanvix/hal.h>
 #include <nanvix/ulib.h>
 #include <nanvix/runtime/barrier.h>
-#include <posix/errno.h>
+#include <nanvix/runtime/pm.h>
 #include <mputil/proc.h>
 #include <mputil/ptr_array.h>
+#include <mpi.h>
 
 PRIVATE void process_construct(mpi_process_t *);
 PRIVATE void process_destruct(mpi_process_t *);
@@ -39,9 +40,9 @@ OBJ_CLASS_INSTANCE(mpi_process_t, &process_construct, &process_destruct, sizeof(
  *
  * @note Instead a #define, this variable should be initialized in execution time.
  */
-PRIVATE int _processes_nr = PROCESSOR_CLUSTERS_NUM;
+PRIVATE int _processes_nr = NANVIX_PROC_MAX;
 
-PRIVATE int _active_nodes[PROCESSOR_CLUSTERS_NUM];
+PRIVATE int _active_nodes[NANVIX_PROC_MAX];
 
 /* @note Const barrier parameter workaround. */
 PRIVATE const int *_active_nodes_addr = _active_nodes;
@@ -65,8 +66,7 @@ PRIVATE void process_construct(mpi_process_t *proc)
 {
 	uassert(proc != NULL);
 
-    proc->nodenum = -1;
-    proc->pid     = -1;
+	proc->pid = -1;
 }
 
 /**
@@ -82,27 +82,17 @@ PRIVATE void process_destruct(mpi_process_t *proc)
 }
 
 /**
- * @brief Allocates a new process for @p nodeid.
- *
- * @param nodeid Process node number.
- *
- * @returns Upon successful completion, the index of the new
- * process in processes_list table is returned. A negative
- * error code is returned instead.
+ * @see process_allocate in proc.h.
  */
-PUBLIC int process_allocate(int nodeid)
+PUBLIC int process_allocate(void)
 {
 	int ret;
-	mpi_process_t * proc;
-
-	/* Bad node id. */
-	if (!WITHIN(nodeid, 0, PROCESSOR_CLUSTERS_NUM))
-		return (-EINVAL);
+	mpi_process_t *proc;
 
 	/* Allocates a new process object. */
 	proc = OBJ_NEW(mpi_process_t);
 	if (proc == NULL)
-		return (-ENOMEM);
+		return (-MPI_ERR_NO_MEM);
 
 	/* Inserts the process in the processes list. */
 	if ((ret = pointer_array_insert(&_processes_list, (void *) proc)) < 0)
@@ -112,17 +102,14 @@ PUBLIC int process_allocate(int nodeid)
 	}
 
 	/* Initializes the process info. */
-	proc->pid     = ret;
-	proc->nodenum = nodeid;
-	usprintf(proc->name, "nanvix-process-%d", nodeid);
+	proc->pid = ret;
+	usprintf(proc->name, "mpi-process-%d", ret);
 
 	return (ret);
 }
 
 /**
- * @brief Gets reference pointer to the local process.
- *
- * @returns Pointer to the local process descriptor.
+ * @see process_local in proc.h.
  */
 PUBLIC mpi_process_t * process_local(void)
 {
@@ -130,40 +117,59 @@ PUBLIC mpi_process_t * process_local(void)
 }
 
 /**
- * @brief Make a name lookup on the processes list.
- *
- * @param name Name of process to lookup.
- *
- * @returns Upon successful completion. a pointer to the process
- * descriptor is returned. Upon failure, a NULL pointer is returned
- * instead.
- *
- * @note If the name could not be found, a NULL pointer is returned.
+ * @see mpi_proc_world_list in proc.h.
  */
-PUBLIC mpi_process_t * process_lookup(const char* name)
+PUBLIC mpi_process_t ** mpi_proc_world_list(int *size)
 {
 	int limit;
-	mpi_process_t * proc;
+	mpi_process_t *proc;
+	mpi_process_t **procs;
+
+	/* Sanity check. */
+	uassert(_processes_nr == pointer_array_get_size(&_processes_list));
+
+	/* Allocates the processes list. */
+	procs = (mpi_process_t **) umalloc(_processes_nr * sizeof(mpi_process_t *));
+	if (procs == NULL)
+		return (NULL);
 
 	limit = pointer_array_get_max_size(&_processes_list);
 
-	for (int i = 0; i < limit; ++i)
+	for (int i = 0, j = 0; (i < limit) && (j < _processes_nr); ++i)
 	{
 		proc = (mpi_process_t *) pointer_array_get_item(&_processes_list, i);
+
+		/* Check if there is a valid process with @p i PID. */
 		if (proc == NULL)
 			continue;
 
-		if (!ustrcmp(name, proc->name))
-			return (proc);
+		procs[j++] = proc;
 	}
 
-	return (NULL);
+	*size = _processes_nr;
+
+	return (procs);
 }
 
 /**
- * @brief Gets the number of processes active.
- *
- * @returns The number of active processes.
+ * @see mpi_proc_self_list in proc.h.
+ */
+PUBLIC mpi_process_t ** mpi_proc_self_list(int *size)
+{
+	mpi_process_t **procs;
+
+	procs = (mpi_process_t **) umalloc(sizeof(mpi_process_t *));
+	if (procs == NULL)
+		return (NULL);
+
+	*procs = process_local();
+	*size  = 1;
+
+	return (procs);
+}
+
+/**
+ * @see mpi_proc_count in proc.h.
  */
 PUBLIC int mpi_proc_count(void)
 {
@@ -183,40 +189,45 @@ PUBLIC int mpi_std_fence(void)
 }
 
 /**
- * @brief Initializes the processes submodule.
- *
- * @returns Upon successful completion, zero is returned. A
- * negative error code is returned instead.
+ * @see mpi_proc_init in proc.h.
  */
 PUBLIC int mpi_proc_init(void)
 {
-	int ret; /* Function return. */
+	int ret;       /* Function return.   */
+	int local_pid; /* Local process PID. */
 
 	/* Initializes list of nodes for stdbarrier. */
 	for (int i = 0; i < _processes_nr; ++i)
-		_active_nodes[i] = i;
+		_active_nodes[i] = MPI_PROCESSES_COMPENSATION + i;
 
 	/* Initializes the std_barrier. */
 	_std_barrier = barrier_create(_active_nodes_addr, _processes_nr);
 	if (!BARRIER_IS_VALID(_std_barrier))
-		return (-ENOMEM);
+		return (MPI_ERR_NO_MEM);
 
 	/* Initializes the processes list. */
 	OBJ_CONSTRUCT(&_processes_list, pointer_array_t);
 
-	ret = pointer_array_init(&_processes_list, 
+	ret = pointer_array_init(&_processes_list,
 		                     TRUNCATE(_processes_nr, 4), 4);
 	if (ret != 0)
 		goto error;
 
 	/* Allocate and initializes the processes references. */
 	for (int i = 0; i < _processes_nr; ++i)
-		uassert(process_allocate(i) == i);
+		uassert(process_allocate() == i);
+
+	/* Calculates local MPI process number. */
+	local_pid = cluster_get_num() - MPI_PROCESSES_COMPENSATION;
 
 	/* Initializes local proc reference. */
-	_local_proc = (mpi_process_t *) pointer_array_get_item(&_processes_list, cluster_get_num());
+	_local_proc = (mpi_process_t *) pointer_array_get_item(&_processes_list, local_pid);
 
 	uassert(_local_proc != NULL);
+
+	/* Register the local process in the system distributed lookup table. */
+	if ((ret = nanvix_setpname(_local_proc->name)) < 0)
+		goto error;
 
 	return (0);
 
@@ -236,8 +247,17 @@ error:
  */
 PUBLIC int mpi_proc_finalize(void)
 {
+	int ret;
 	int limit;
-	mpi_process_t * proc;
+	mpi_process_t *proc;
+
+	/**
+	 * Unlinks local_proc in system lookup table.
+	 *
+	 * @note If an error occurs during unlink, proc_finalize will conclude
+	 * normally but the error will be reflected on the function return.
+	 */
+	ret = name_unlink(_local_proc->name);
 
 	/* Releases local process reference. */
 	_local_proc = NULL;
@@ -264,5 +284,5 @@ PUBLIC int mpi_proc_finalize(void)
 	/* Releases _std_barrier. */
 	barrier_destroy(_std_barrier);
 
-	return (0);
+	return (ret);
 }

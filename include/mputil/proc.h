@@ -25,10 +25,14 @@
 #ifndef NANVIX_PROCESS_H_
 #define NANVIX_PROCESS_H_
 
-#include <nanvix/hal.h>
+#include <nanvix/limits.h>
+#include <nanvix/config.h>
 #include <mputil/object.h>
 
-#define PROCESS_NAME_MAX_LENGTH 32
+/**
+ * @brief Base compensation for clusters know their local mpi_id.
+ */
+#define MPI_PROCESSES_COMPENSATION SPAWNERS_NUM
 
 /**
  * @brief Struct that defines a dynamic pointer array.
@@ -37,9 +41,8 @@ struct mpi_process_t
 {
 	object_t super; /* Base object class. */
 
-	char name[PROCESS_NAME_MAX_LENGTH];
+	char name[NANVIX_PROC_NAME_MAX];
 	int pid;        /* Process ID.        */
-	int nodenum;    /* Process nodenum.   */
 };
 
 typedef struct mpi_process_t mpi_process_t;
@@ -50,25 +53,11 @@ OBJ_CLASS_DECLARATION(mpi_process_t);
 /**
  * @brief Allocates a new process for @p nodeid.
  *
- * @param nodeid Process node number.
- *
- * @returns Upon successful completion, the index of the new
+ * @returns Upon successful completion, PID of the new
  * process in processes_list table is returned. A negative
- * error code is returned instead.
+ * MPI error code is returned instead.
  */
-extern int process_allocate(int nodeid);
-
-/**
- * @brief Get the process nodenum.
- *
- * @param proc Process descriptor.
- *
- * @returns @p proc nodenum.
- */
-static inline int process_nodenum(mpi_process_t *proc)
-{
-	return proc->nodenum;
-}
+extern int process_allocate(void);
 
 /**
  * @brief Gets reference pointer to the local process.
@@ -78,20 +67,33 @@ static inline int process_nodenum(mpi_process_t *proc)
 extern mpi_process_t * process_local(void);
 
 /**
- * @brief Make a name lookup on the processes list.
+ * @brief Returns a processes list containing all active processes.
  *
- * @param name Name of process to lookup.
+ * @param size Size variable to hold the list size info.
  *
- * @returns UPon successful completion. a pointer to the process
- * descriptor is returned. Upon failure, a NULL pointer is returned
- * instead.
+ * @returns Upon successful completion, a pointer to the procs list
+ * is returned. A NULL pointer is returned instead.
  *
- * @note If the name could not be found, a NULL pointer is returned.
+ * @note The involved processes refcount is not updated. It is caller's
+ * responsability to ensure correctness.
  */
-extern mpi_process_t * process_lookup(const char* name);
+extern mpi_process_t ** mpi_proc_world_list(int *size);
 
 /**
- * @brief Gets the number of processes active.
+ * @brief Returns a processes list containing only the local process.
+ *
+ * @param size Size variable to hold the list size info.
+ *
+ * @returns Upon successful completion, a pointer to the procs list
+ * is returned. A NULL pointer is returned instead.
+ *
+ * @note The involved processes refcount is not updated. It is caller's
+ * responsability to ensure correctness.
+ */
+extern mpi_process_t ** mpi_proc_self_list(int *size);
+
+/**
+ * @brief Gets the number of active processes.
  *
  * @returns The number of active processes.
  */
@@ -109,7 +111,7 @@ extern int mpi_std_fence(void);
  * @brief Initializes the processes submodule.
  *
  * @returns Upon successful completion, zero is returned. A
- * negative error code is returned instead.
+ * negative MPI error code is returned instead.
  */
 extern int mpi_proc_init(void);
 
