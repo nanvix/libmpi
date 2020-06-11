@@ -44,6 +44,8 @@ install: | all-target install-headers
 	@cp -f $(LIBDIR)/libnanvix*.a $(PREFIX)/lib
 	@cp -f $(LIBDIR)/libc*.a $(PREFIX)/lib
 	@cp -f $(LIBDIR)/libruntime*.a $(PREFIX)/lib
+	@cp -f $(BINDIR)/nanvix-zombie.* $(PREFIX)/bin
+	@cp -f $(BINDIR)/nanvix-spawn*.* $(PREFIX)/bin
 	@cp -f $(LIBDIR)/libmpi*.a $(PREFIX)/lib
 	@echo [CP] $(PREFIX)/lib/barelib*.a
 	@echo [CP] $(PREFIX)/lib/libhal*.a
@@ -52,7 +54,9 @@ install: | all-target install-headers
 	@echo [CP] $(PREFIX)/lib/libnanvix*.a
 	@echo [CP] $(PREFIX)/lib/libc*.a
 	@echo [CP] $(PREFIX)/lib/libruntime*.a
-	@echo [RM] $(PREFIX)/lib/libmpi*.a
+	@echo [CP] $(PREFIX)/bin/nanvix-zombie.*
+	@echo [CP] $(PREFIX)/bin/nanvix-spawn*.*
+	@echo [CP] $(PREFIX)/lib/libmpi*.a
 	@echo "==============================================================================="
 	@echo "Nanvix Libmpi Successfully Installed"
 	@echo "==============================================================================="
@@ -70,6 +74,8 @@ uninstall: | distclean uninstall-headers
 	@rm -f $(PREFIX)/lib/libnanvix*.a
 	@rm -f $(PREFIX)/lib/libc*.a
 	@rm -f $(PREFIX)/lib/libruntime*.a
+	@rm -f $(BINDIR)/nanvix-zombie.*
+	@rm -f $(BINDIR)/nanvix-spawn*.*
 	@rm -f $(PREFIX)/lib/libmpi*.a
 	@echo [RM] $(PREFIX)/lib/barelib*.a
 	@echo [RM] $(PREFIX)/lib/libhal*.a
