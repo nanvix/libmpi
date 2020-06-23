@@ -24,21 +24,26 @@
 
 #include <nanvix/hal.h>
 #include <nanvix/ulib.h>
+#include <nanvix/config.h>
+#include <nanvix/limits.h>
 #include <mpi.h>
 
 /**
  * @brief Dummy test driver.
  */
-int __main2(int argc, char *argv[])
+int __main3(int argc, char *argv[])
 {
 	int flag;
 	int rank, rank2;
 	int size, size2;
+	int expected_rank;
 	MPI_Group group;
 	MPI_Errhandler errhandler;
 
 	UNUSED(argc);
 	UNUSED(argv);
+
+	expected_rank = cluster_get_num() - SPAWNERS_NUM;
 
 	uprintf("---------------------------------------------");
 
@@ -68,17 +73,17 @@ int __main2(int argc, char *argv[])
 	uprintf("Group asserted");
 
 	MPI_Group_rank(group, &rank);
-	uassert(rank == cluster_get_num());
+	uassert(rank == expected_rank);
 
 	uprintf("Group rank asserted");
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank2);
-	uassert(rank2 == cluster_get_num());
+	uassert(rank2 == expected_rank);
 
 	uprintf("Comm rank asserted");
 
 	MPI_Group_size(group, &size);
-	uassert(size == PROCESSOR_CLUSTERS_NUM);
+	uassert(size == NANVIX_PROC_MAX);
 
 	uprintf("Group size asserted");
 

@@ -71,7 +71,7 @@ export LIBRUNTIME := libruntime-$(TARGET).a
 export LIBMPI     := libmpi-$(TARGET).a
 
 # Binaries
-export EXEC := test-driver.$(TARGET)
+export EXEC := nanvix-test.$(TARGET)
 
 #===============================================================================
 # Target-Specific Make Rules
@@ -94,6 +94,9 @@ export CFLAGS += -fno-stack-protector
 export CFLAGS += -Wno-unused-function
 export CFLAGS += -I $(INCDIR)
 export CFLAGS += -I $(ROOTDIR)/src/lwip/src/include
+
+# Enable sync and portal implementation that uses mailboxes
+export CFLAGS += -D__NANVIX_IKC_USES_ONLY_MAILBOX=0
 
 # Additional C Flags
 include $(BUILDDIR)/makefile.cflags
