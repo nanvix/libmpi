@@ -53,7 +53,8 @@ LIBS += $(LIBDIR)/$(BARELIB) $(THEIR_LIBS)
 SRC = $(wildcard group/*.c)        \
       $(wildcard communicator/*.c) \
       $(wildcard errhandler/*.c)   \
-      $(wildcard runtime/*.c)
+      $(wildcard runtime/*.c)      \
+      $(wildcard datatype/*.c)
 
 #===============================================================================
 # Object Files
