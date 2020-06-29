@@ -28,6 +28,8 @@
 #include <nanvix/limits.h>
 #include <mpi.h>
 
+#include <mpi/datatype.h>
+
 /**
  * @brief Dummy test driver.
  */
@@ -65,6 +67,14 @@ int __main3(int argc, char *argv[])
 	MPI_Finalized(&flag);
 	uassert(!flag);
 	uprintf("Asserted Not finalized");
+
+	mpi_datatype_size(MPI_INT, &size);
+	uassert(size == sizeof(int));
+	uprintf("Datatype size asserted");
+
+	mpi_datatype_size(MPI_DATATYPE_NULL, &size);
+	uassert(size == 0);
+	uprintf("NULL Datatype size asserted");
 
 	MPI_Comm_group(MPI_COMM_WORLD, &group);
 

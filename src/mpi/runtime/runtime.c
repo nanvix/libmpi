@@ -28,6 +28,7 @@
 #include <mpi/errhandler.h>
 #include <mpi/group.h>
 #include <mpi/communicator.h>
+#include <mpi/datatype.h>
 
 /**
  * @brief Global MPI state variable.
@@ -62,6 +63,11 @@ PUBLIC int mpi_init(int argc, char **argv)
 	spinlock_unlock(&_runtime_lock);
 
 	/* Initialize MPI_Datatypes. */
+	if ((ret = mpi_datatype_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! mpi_datatype_init() failed");
+		goto end;
+	}
 
 	/* Initializes processes. */
 	if ((ret = mpi_proc_init()) != MPI_SUCCESS)
@@ -200,6 +206,13 @@ PUBLIC int mpi_finalize(void)
 	if ((ret = mpi_proc_finalize()) != MPI_SUCCESS)
 	{
 		uprintf("ERROR!!! mpi_proc_finalize() failed");
+		goto end;
+	}
+
+	/* Finalize datatypes. */
+	if ((ret = mpi_datatype_finalize()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! mpi_datatype_finalize() failed");
 		goto end;
 	}
 
