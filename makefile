@@ -40,6 +40,15 @@ export RELEASE ?= no
 # Installation Prefix
 export PREFIX ?= $(HOME)
 
+# Use Docker?
+export DOCKER ?= no
+
+# Stall regression tests?
+export SUPPRESS_TESTS ?= no
+
+# Extras
+export ADDONS ?=
+
 #===============================================================================
 # Directories
 #===============================================================================
@@ -70,14 +79,11 @@ export LIBC       := libc-$(TARGET).a
 export LIBRUNTIME := libruntime-$(TARGET).a
 export LIBMPI     := libmpi-$(TARGET).a
 
-# Binaries
-export EXEC := nanvix-test.$(TARGET)
-
 #===============================================================================
 # Target-Specific Make Rules
 #===============================================================================
 
-include $(MAKEDIR)/makefile
+include $(MAKEDIR)/makefile.libmpi
 
 #===============================================================================
 # Toolchain Configuration
@@ -94,6 +100,7 @@ export CFLAGS += -fno-stack-protector
 export CFLAGS += -Wno-unused-function
 export CFLAGS += -I $(INCDIR)
 export CFLAGS += -I $(ROOTDIR)/src/lwip/src/include
+export CFLAGS += $(ADDONS)
 
 # Enable sync and portal implementation that uses mailboxes
 export CFLAGS += -D__NANVIX_IKC_USES_ONLY_MAILBOX=0
@@ -135,7 +142,7 @@ distclean: distclean-target
 # Contrib Install and Uninstall Rules
 #===============================================================================
 
-include $(BUILDDIR)/makefile.contrib
+include $(BUILDDIR)/makefile.libmpi
 
 #===============================================================================
 # Install and Uninstall Rules
