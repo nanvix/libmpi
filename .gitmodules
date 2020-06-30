@@ -4,3 +4,6 @@
 [submodule "contrib/multikernel"]
 	path = contrib/multikernel
 	url = https://github.com/nanvix/multikernel.git
+[submodule "build"]
+	path = build
+	url = https://github.com/nanvix/build.git
