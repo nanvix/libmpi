@@ -25,6 +25,8 @@
 #ifndef NANVIX_LIBMPI_MPI_H_
 #define NANVIX_LIBMPI_MPI_H_
 
+#include <posix/stdint.h>
+
 /**
  * @note Temporary definitions. Declared only for convenience on errhandlers definition.
  * It should be dropped from here and defined in specific files for each when properly
@@ -41,6 +43,13 @@ typedef struct mpi_group_t        *MPI_Group;
 typedef struct mpi_win_t          *MPI_Win;
 typedef struct mpi_file_t         *MPI_File;
 typedef struct mpi_errhandler_t   *MPI_Errhandler;
+
+/**
+ * @brief Another predefined datatypes.
+ */
+typedef uint64_t *MPI_Aint;
+typedef uint64_t *MPI_Count;
+typedef uint64_t *MPI_Offset;
 
 /**
  * @brief User exported function typedefs.
@@ -180,19 +189,96 @@ typedef void MPI_File_errhandler_function(MPI_File *, int *, ...);
 #define MPI_THREAD_MULTIPLE   3
 
 /**
+ * @brief Predefined MPI_Datatype external structures.
+ */
+extern const struct mpi_datatype_t _mpi_datatype_char;
+extern const struct mpi_datatype_t _mpi_datatype_short;
+extern const struct mpi_datatype_t _mpi_datatype_int;
+extern const struct mpi_datatype_t _mpi_datatype_long;
+extern const struct mpi_datatype_t _mpi_datatype_long_long;
+extern const struct mpi_datatype_t _mpi_datatype_long_long;
+extern const struct mpi_datatype_t _mpi_datatype_signed_char;
+extern const struct mpi_datatype_t _mpi_datatype_unsigned_char;
+extern const struct mpi_datatype_t _mpi_datatype_unsigned_short;
+extern const struct mpi_datatype_t _mpi_datatype_unsigned;
+extern const struct mpi_datatype_t _mpi_datatype_unsigned_long;
+extern const struct mpi_datatype_t _mpi_datatype_unsigned_long_long;
+extern const struct mpi_datatype_t _mpi_datatype_float;
+extern const struct mpi_datatype_t _mpi_datatype_double;
+extern const struct mpi_datatype_t _mpi_datatype_long_double;
+extern const struct mpi_datatype_t _mpi_datatype_wchar;
+extern const struct mpi_datatype_t _mpi_datatype_cbool;
+extern const struct mpi_datatype_t _mpi_datatype_int8;
+extern const struct mpi_datatype_t _mpi_datatype_int16;
+extern const struct mpi_datatype_t _mpi_datatype_int32;
+extern const struct mpi_datatype_t _mpi_datatype_int64;
+extern const struct mpi_datatype_t _mpi_datatype_uint8;
+extern const struct mpi_datatype_t _mpi_datatype_uint16;
+extern const struct mpi_datatype_t _mpi_datatype_uint32;
+extern const struct mpi_datatype_t _mpi_datatype_uint64;
+extern const struct mpi_datatype_t _mpi_datatype_ccomplex;
+extern const struct mpi_datatype_t _mpi_datatype_ccomplex;
+extern const struct mpi_datatype_t _mpi_datatype_double_complex;
+extern const struct mpi_datatype_t _mpi_datatype_long_double_complex;
+extern const struct mpi_datatype_t _mpi_datatype_byte;
+extern const struct mpi_datatype_t _mpi_datatype_packed;
+extern const struct mpi_datatype_t _mpi_datatype_aint;
+extern const struct mpi_datatype_t _mpi_datatype_offset;
+extern const struct mpi_datatype_t _mpi_datatype_count;
+
+/**
+ * @brief Predefined datatypes.
+ */
+#define MPI_CHAR                  &_mpi_datatype_char
+#define MPI_SHORT                 &_mpi_datatype_short
+#define MPI_INT                   &_mpi_datatype_int
+#define MPI_LONG                  &_mpi_datatype_long
+#define MPI_LONG_LONG_INT         &_mpi_datatype_long_long
+#define MPI_LONG_LONG             &_mpi_datatype_long_long
+#define MPI_SIGNED_CHAR           &_mpi_datatype_signed_char
+#define MPI_UNSIGNED_CHAR         &_mpi_datatype_unsigned_char
+#define MPI_UNSIGNED_SHORT        &_mpi_datatype_unsigned_short
+#define MPI_UNSIGNED              &_mpi_datatype_unsigned
+#define MPI_UNSIGNED_LONG         &_mpi_datatype_unsigned_long
+#define MPI_UNSIGNED_LONG_LONG    &_mpi_datatype_unsigned_long_long
+#define MPI_FLOAT                 &_mpi_datatype_float
+#define MPI_DOUBLE                &_mpi_datatype_double
+#define MPI_LONG_DOUBLE           &_mpi_datatype_long_double
+#define MPI_WCHAR                 &_mpi_datatype_wchar
+#define MPI_C_BOOL                &_mpi_datatype_cbool
+#define MPI_INT8_T                &_mpi_datatype_int8
+#define MPI_INT16_T               &_mpi_datatype_int16
+#define MPI_INT32_T               &_mpi_datatype_int32
+#define MPI_INT64_T               &_mpi_datatype_int64
+#define MPI_UINT8_T               &_mpi_datatype_uint8
+#define MPI_UINT16_T              &_mpi_datatype_uint16
+#define MPI_UINT32_T              &_mpi_datatype_uint32
+#define MPI_UINT64_T              &_mpi_datatype_uint64
+#define MPI_C_COMPLEX             &_mpi_datatype_ccomplex
+#define MPI_C_FLOAT_COMPLEX       &_mpi_datatype_ccomplex
+#define MPI_C_DOUBLE_COMPLEX      &_mpi_datatype_double_complex
+#define MPI_C_LONG_DOUBLE_COMPLEX &_mpi_datatype_long_double_complex
+#define MPI_BYTE                  &_mpi_datatype_byte
+#define MPI_PACKED                &_mpi_datatype_packed
+#define MPI_AINT                  &_mpi_datatype_aint
+#define MPI_OFFSET                &_mpi_datatype_offset
+#define MPI_COUNT                 &_mpi_datatype_count
+
+/**
  * @brief External predefined structures.
  *
  * @note These are global predefined structures exported as definitions below.
  */
-extern struct mpi_group_t _mpi_group_empty;
-extern struct mpi_group_t _mpi_group_null;
+extern struct mpi_group_t        _mpi_group_empty;
+extern struct mpi_group_t        _mpi_group_null;
 extern struct mpi_communicator_t _mpi_comm_world;
 extern struct mpi_communicator_t _mpi_comm_self;
 extern struct mpi_communicator_t _mpi_comm_null;
-extern struct mpi_errhandler_t _mpi_errhandler_errors_fatal;
-extern struct mpi_errhandler_t _mpi_errhandler_errors_abort;
-extern struct mpi_errhandler_t _mpi_errors_return;
-extern struct mpi_errhandler_t _mpi_errhandler_null;
+extern struct mpi_errhandler_t   _mpi_errhandler_errors_fatal;
+extern struct mpi_errhandler_t   _mpi_errhandler_errors_abort;
+extern struct mpi_errhandler_t   _mpi_errors_return;
+extern struct mpi_errhandler_t   _mpi_errhandler_null;
+extern struct mpi_datatype_t     _mpi_datatype_null;
 
 /**
  * @brief Predefined handlers.
@@ -210,6 +296,7 @@ extern struct mpi_errhandler_t _mpi_errhandler_null;
 #define MPI_GROUP_NULL      &_mpi_group_null
 #define MPI_COMM_NULL       &_mpi_comm_null
 #define MPI_ERRHANDLER_NULL &_mpi_errhandler_null
+#define MPI_DATATYPE_NULL   &_mpi_datatype_null
 
 /**
  * @brief MPI_Functions declaration.

@@ -48,11 +48,11 @@ struct object_t
  * @note There should be a single instance of this descriptor for each class
  * definition.
  */
- struct object_class_t {
-    const char *cls_name;              /**< Symbolic name of class. */
-    object_construct_t *obj_construct; /**< Object constructor.     */
-    object_destruct_t *obj_destruct;   /**< Object destructor.      */
-    size_t cls_sizeof;                 /**< Size of an instance.    */
+struct object_class_t {
+    const char *cls_name;              /* Symbolic name of class. */
+    object_construct_t *obj_construct; /* Object constructor.     */
+    object_destruct_t *obj_destruct;   /* Object destructor.      */
+    size_t cls_sizeof;                 /* Size of an instance.    */
 };
 
 /*============================================================================*
@@ -100,19 +100,19 @@ struct object_t
 /**
  * @brief Macro that calls the static object destructor.
  */
-#define OBJ_DESTRUCT(obj)    \
+#define OBJ_DESTRUCT(obj)   \
     (object_destruct((object_t *) obj))
 
 /**
  * @brief Macro that calls the dynamic object constructor.
  */
-#define OBJ_NEW(type)    \
-    ((type *)object_new(OBJ_CLASS(type)))
+#define OBJ_NEW(type)   \
+    ((type *) object_new(OBJ_CLASS(type)))
 
 /**
  * @brief Macro that calls the object_retain function.
  */
-#define OBJ_RETAIN(obj)    \
+#define OBJ_RETAIN(obj)     \
     (object_retain((object_t *) obj))
 
 /**
@@ -120,6 +120,17 @@ struct object_t
  */
 #define OBJ_RELEASE(obj)    \
     (object_release((object_t **) &obj))
+
+/**
+ * @brief Statically initializes a predefined object.
+ *
+ * @param BASE_CLASS Name of the object base class.
+ */
+#define OBJ_STATIC_INIT(BASE_CLASS)             \
+    {                                           \
+        .obj_class = OBJ_CLASS(BASE_CLASS),     \
+        .refcount  = 1,                         \
+    }
 
 /*============================================================================*
  * Object related functions.                                                  *
