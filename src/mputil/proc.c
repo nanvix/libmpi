@@ -28,6 +28,7 @@
 #include <nanvix/runtime/pm.h>
 #include <mputil/proc.h>
 #include <mputil/ptr_array.h>
+#include <mpi/mpiruntime.h>
 #include <mpi.h>
 
 PRIVATE void process_construct(mpi_process_t *);
@@ -47,7 +48,7 @@ PRIVATE int _active_nodes[NANVIX_PROC_MAX];
 /* @note Const barrier parameter workaround. */
 PRIVATE const int *_active_nodes_addr = _active_nodes;
 
-PRIVATE barrier_t _std_barrier = BARRIER_NULL;
+PRIVATE barrier_t _std_barrier;
 
 /**
  * @brief Processes list.
@@ -182,7 +183,7 @@ PUBLIC int mpi_proc_count(void)
 PUBLIC int mpi_std_fence(void)
 {
 	/* Checks if the proc system was already initialized. */
-	if (!BARRIER_IS_VALID(_std_barrier))
+	if (_mpi_state < MPI_STATE_INIT_STARTED)
 		return (-EINVAL);
 
 	return (barrier_wait(_std_barrier));
