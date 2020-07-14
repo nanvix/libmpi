@@ -35,7 +35,7 @@
  */
 mpi_state_t _mpi_state = MPI_STATE_NOT_INITIALIZED;
 
-spinlock_t _runtime_lock;
+spinlock_t _runtime_lock = SPINLOCK_UNLOCKED;
 
 /**
  * @see mpi_init() at mpiruntime.h.
