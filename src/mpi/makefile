@@ -23,31 +23,11 @@
 #
 
 #===============================================================================
-# Toolchain Configuration 
+# Binaries Sources and Objects
 #===============================================================================
 
-# Compiler Options
-ifneq ($(LIBLWIP),)
-CFLAGS += -I $(INCDIR)/posix
-endif
-
-# Libraries
-LIBS := -Wl,--whole-archive
-LIBS += $(LIBDIR)/$(LIBHAL)
-LIBS += $(LIBDIR)/$(LIBMPI)
-LIBS += $(LIBDIR)/$(LIBKERNEL)
-LIBS += $(LIBDIR)/$(LIBRUNTIME)
-LIBS += -Wl,--no-whole-archive
-LIBS += $(LIBDIR)/$(LIBC)
-LIBS += $(LIBDIR)/$(LIBNANVIX)
-ifneq ($(LIBLWIP),)
-LIBS += $(LIBDIR)/$(LIBLWIP)
-endif
-LIBS += $(LIBDIR)/$(BARELIB) $(THEIR_LIBS)
-
-#===============================================================================
-# Sources
-#===============================================================================
+# Binary
+ARCHIVE = $(LIBMPI)
 
 # C Source Files
 SRC = $(wildcard group/*.c)        \
@@ -56,46 +36,8 @@ SRC = $(wildcard group/*.c)        \
       $(wildcard runtime/*.c)      \
       $(wildcard datatype/*.c)
 
-#===============================================================================
-# Object Files
-#===============================================================================
-
 OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 
 #===============================================================================
 
-# Builds all object files.
-all: $(OBJ)
-ifeq ($(VERBOSE), no)
-	@echo [AR] $(LIBMPI)
-	@$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBMPI) $(OBJ)
-else
-	$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBMPI) $(OBJ)
-endif
-
-# Cleans all object files.
-clean:
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(OBJ)
-	@rm -rf $(OBJ)
-else
-	rm -rf $(OBJ)
-endif
-
-# Cleans everything.
-distclean: clean
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(LIBMPI)
-	@rm -rf $(LIBDIR)/$(LIBMPI)
-else
-	rm -rf $(LIBDIR)/$(LIBMPI)
-endif
-
-# Builds a C source file.
-%.$(OBJ_SUFFIX).o: %.c
-ifeq ($(VERBOSE), no)
-	@echo [CC] $@
-	@$(CC) $(CFLAGS) $< -c -o $@
-else
-	$(CC) $(CFLAGS) $< -c -o $@
-endif
+include $(BUILDDIR)/makefile.archive

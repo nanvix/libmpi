@@ -35,6 +35,11 @@
 #define MPI_PROCESSES_COMPENSATION SPAWNERS_NUM
 
 /**
+ * @brief Compensation for NoC nodes reserved for spawners.
+ */
+#define MPI_NODES_COMPENSATION (PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM)
+
+/**
  * @brief Struct that defines a dynamic pointer array.
  */
 struct mpi_process_t

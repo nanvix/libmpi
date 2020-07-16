@@ -199,7 +199,7 @@ PUBLIC int mpi_proc_init(void)
 
 	/* Initializes list of nodes for stdbarrier. */
 	for (int i = 0; i < _processes_nr; ++i)
-		_active_nodes[i] = MPI_PROCESSES_COMPENSATION + i;
+		_active_nodes[i] = MPI_PROCESSES_COMPENSATION * MPI_NODES_COMPENSATION + i;
 
 	/* Initializes the std_barrier. */
 	_std_barrier = barrier_create(_active_nodes_addr, _processes_nr);
@@ -258,7 +258,7 @@ PUBLIC int mpi_proc_finalize(void)
 	 * @note If an error occurs during unlink, proc_finalize will conclude
 	 * normally but the error will be reflected on the function return.
 	 */
-	ret = name_unlink(_local_proc->name);
+	ret = nanvix_name_unlink(_local_proc->name);
 
 	/* Releases local process reference. */
 	_local_proc = NULL;
