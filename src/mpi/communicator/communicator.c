@@ -27,7 +27,7 @@
 #include <posix/errno.h>
 #include <mpi/communicator.h>
 #include <mpi/mpiruntime.h>
-#include <nanvix/limits.h>
+#include <mputil/comm_context.h>
 
 PRIVATE void mpi_comm_construct(mpi_communicator_t *);
 PRIVATE void mpi_comm_destruct(mpi_communicator_t *);
@@ -167,8 +167,8 @@ PUBLIC int mpi_comm_init(void)
 
 	_mpi_comm_world.group         = group;
 	_mpi_comm_world.my_rank       = group->my_rank;
-	_mpi_comm_world.pt2pt_cid     = 0;
-	_mpi_comm_world.coll_cid      = 1;
+	_mpi_comm_world.pt2pt_cid     = MPI_CONTEXT_BASE;
+	_mpi_comm_world.coll_cid      = (MPI_CONTEXT_BASE + 1);
 	_mpi_comm_world.error_handler = MPI_ERRORS_ARE_FATAL;
 	OBJ_RETAIN(_mpi_comm_world.error_handler);
 
@@ -184,7 +184,7 @@ PUBLIC int mpi_comm_init(void)
 
 	_mpi_comm_self.group         = group;
 	_mpi_comm_self.my_rank       = group->my_rank;
-	_mpi_comm_self.pt2pt_cid     = 2;
+	_mpi_comm_self.pt2pt_cid     = (MPI_CONTEXT_BASE + 2);
 	_mpi_comm_self.coll_cid      = MPI_UNDEFINED;
 	_mpi_comm_self.error_handler = MPI_ERRORS_ARE_FATAL;
 	OBJ_RETAIN(_mpi_comm_self.error_handler);

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal.h>
 #include <mputil/proc.h>
+#include <mputil/comm_context.h>
 #include <mpi/mpiruntime.h>
 #include <mpi/errhandler.h>
 #include <mpi/group.h>
@@ -99,6 +99,13 @@ PUBLIC int mpi_init(int argc, char **argv)
 	if ((ret = mpi_group_init()) != MPI_SUCCESS)
 	{
 		uprintf("ERROR!!! mpi_group_init() failed");
+		goto end;
+	}
+
+	/* Initialize comm_contexts module. */
+	if ((ret = comm_context_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! comm_context_init() failed");
 		goto end;
 	}
 
@@ -185,6 +192,13 @@ PUBLIC int mpi_finalize(void)
 	if ((ret = mpi_comm_finalize()) != MPI_SUCCESS)
 	{
 		uprintf("ERROR!!! mpi_comm_finalize() failed");
+		goto end;
+	}
+
+	/* Finalize comm_contexts module. */
+	if ((ret = comm_context_finalize()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! comm_context_finalize() failed");
 		goto end;
 	}
 

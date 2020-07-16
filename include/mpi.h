@@ -43,6 +43,8 @@ typedef struct mpi_group_t        *MPI_Group;
 typedef struct mpi_win_t          *MPI_Win;
 typedef struct mpi_file_t         *MPI_File;
 typedef struct mpi_errhandler_t   *MPI_Errhandler;
+typedef struct mpi_datatype_t     *MPI_Datatype;
+typedef struct mpi_status_t        MPI_Status;
 
 /**
  * @brief Another predefined datatypes.
@@ -50,6 +52,25 @@ typedef struct mpi_errhandler_t   *MPI_Errhandler;
 typedef uint64_t *MPI_Aint;
 typedef uint64_t *MPI_Count;
 typedef uint64_t *MPI_Offset;
+
+/**
+ * @brief MPI_Status definition.
+ *
+ * @note Defined here cause MPI Specification defines that this struct
+ * has public fields that may be accessed by the user.
+ */
+struct mpi_status_t
+{
+	int MPI_SOURCE; /* MPI message sender.     */
+	int MPI_TAG;    /* MPI message tag.        */
+	int MPI_ERROR;  /* MPI message error code. */
+
+	/**
+	 * @note The following fields are internal to the MPI implementation and
+	 * should not be directly accessed, besides the implementation itself.
+	 */
+	int received_size; /* Received size in transfer. */
+};
 
 /**
  * @brief User exported function typedefs.
@@ -71,6 +92,12 @@ typedef void MPI_File_errhandler_function(MPI_File *, int *, ...);
 #define MPI_MAX_PROCESSOR_NAME         128
 
 /* End of assorted constants. */
+
+/**
+ * @brief Special STATUS constants.
+ */
+#define MPI_STATUS_IGNORE   NULL
+#define MPI_STATUSES_IGNORE NULL
 
 /**
  * @brief Assorted constants.
@@ -310,10 +337,13 @@ extern int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
 extern int MPI_Errhandler_free(MPI_Errhandler *errhandler);
 extern int MPI_Finalize(void);
 extern int MPI_Finalized(int *flag);
+extern int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count);
 extern int MPI_Group_rank(MPI_Group group, int *rank);
 extern int MPI_Group_size(MPI_Group group, int *size);
 extern int MPI_Group_free(MPI_Group *group);
 extern int MPI_Init(int *argc, char ***argv);
 extern int MPI_Initialized(int *flag);
+extern int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status);
+extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm);
 
 #endif /* NANVIX_LIBMPI_H_ */
