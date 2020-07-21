@@ -43,8 +43,10 @@ PUBLIC int MPI_Errhandler_free(MPI_Errhandler *errhandler)
 	/* Parameters checking. */
 	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
 
+	if (!mpi_errhandler_is_valid(*errhandler))
+
 	/* Bad error handler. */
-	if ((errhandler == NULL) || (*errhandler == NULL) || (*errhandler == MPI_ERRHANDLER_NULL))
+	if ((errhandler == NULL) || (!mpi_errhandler_is_valid(*errhandler)))
 		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME));
 
 	ret = mpi_errhandler_free((mpi_errhandler_t **) errhandler);

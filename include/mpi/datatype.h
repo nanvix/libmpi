@@ -60,6 +60,19 @@ static inline int mpi_datatype_size(const mpi_datatype_t *datatype, int *size)
 }
 
 /**
+ * @brief Checks if a datatype pointer is valid.
+ *
+ * @param type Target datatype.
+ *
+ * @returns Zero if the datatype is not valid, and a non-zero
+ * value otherwise.
+ */
+static inline int mpi_datatype_is_valid(mpi_datatype_t* type)
+{
+    return ((type != NULL) && (type != MPI_DATATYPE_NULL));
+}
+
+/**
  * @brief Initializes the datatypes submodule.
  *
  * @returns Upon successful completion, zero is returned. A
