@@ -79,6 +79,19 @@ extern mpi_group_t * mpi_group_allocate_w_procs(mpi_process_t ** procs, int grou
 extern int mpi_group_free(mpi_group_t ** group);
 
 /**
+ * @brief Checks if a group pointer is valid.
+ *
+ * @param group Target group.
+ *
+ * @returns Zero if the group is not valid, and a non-zero
+ * value otherwise.
+ */
+static inline int mpi_group_is_valid(mpi_group_t* group)
+{
+    return ((group != NULL) && (group != MPI_GROUP_NULL));
+}
+
+/**
  * @brief Gets the group size.
  *
  * @param group Group descriptor.

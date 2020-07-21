@@ -43,16 +43,23 @@ static const char FUNC_NAME[] = "MPI_Group_rank";
  */
 PUBLIC int MPI_Group_rank(MPI_Group group, int *rank)
 {
+	int ret;
+
 	/* Parameters checking. */
 	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
 
+	ret = MPI_SUCCESS;
+
 	/* Bad group. */
-	if ((group == NULL) || (group == MPI_GROUP_NULL))
-		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, FUNC_NAME));
+	if (!mpi_group_is_valid(group))
+		ret = MPI_ERR_GROUP;
 
 	/* Bad rank holder. */
 	if (rank == NULL)
-		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME));
+		ret = MPI_ERR_ARG;
+
+	/* Checks if there was an error and calls an error handler case positive. */
+	MPI_ERRHANDLER_CHECK(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
 
 	*rank = mpi_group_rank((mpi_group_t *) group);
 
