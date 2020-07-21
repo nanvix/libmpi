@@ -39,25 +39,31 @@ static const char FUNC_NAME[] = "MPI_Comm_set_errhandler";
  */
 PUBLIC int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
 {
+	int ret;
 	mpi_errhandler_t *tmp;
 
 	/* Parameters checking. */
 	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
 
 	/* Bad communicator. */
-	if ((comm == NULL) || (comm == MPI_COMM_NULL))
+	if (!mpi_comm_is_valid(comm))
 		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME));
 
+	ret = MPI_SUCCESS;
+
 	/* Bad errhandler reference. */
-	if ((errhandler == NULL) || (errhandler == MPI_ERRHANDLER_NULL))
-		goto error;
+	if (!mpi_errhandler_is_valid(errhandler))
+		ret = MPI_ERR_ARG;
 
 	/* Bad errhandler_type. */
 	if ((errhandler->errhandler_object_type != MPI_ERRHANDLER_TYPE_COMM) &&
 		(errhandler->errhandler_object_type != MPI_ERRHANDLER_TYPE_PREDEFINED))
 	{
-		goto error;
+		ret = MPI_ERR_ARG;
 	}
+
+	/* Checks if there was an error and calls an error handler case positive. */
+	MPI_ERRHANDLER_CHECK(ret, comm, ret, FUNC_NAME);
 
 	/* Associates the new error handler with @p comm. */
 	tmp = comm->error_handler;
@@ -68,7 +74,4 @@ PUBLIC int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
 	OBJ_RELEASE(tmp);
 
 	return (MPI_SUCCESS);
-
-error:
-	return (MPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME));
 }

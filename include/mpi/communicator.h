@@ -25,6 +25,7 @@
 #ifndef NANVIX_MPI_COMMUNICATOR_H_
 #define NANVIX_MPI_COMMUNICATOR_H_
 
+#include <nanvix/hlib.h>
 #include <mputil/object.h>
 #include <mpi/group.h>
 #include <mpi/errhandler.h>
@@ -107,6 +108,33 @@ static inline int mpi_comm_size(mpi_communicator_t * comm)
 static inline int mpi_comm_get_pt2pt_cid(mpi_communicator_t* comm)
 {
     return (comm->pt2pt_cid);
+}
+
+/**
+ * @brief Checks if a communicator pointer is valid.
+ *
+ * @param comm Target communicator.
+ *
+ * @returns Zero if the communicator is not valid, and a non-zero
+ * value otherwise.
+ */
+static inline int mpi_comm_is_valid(mpi_communicator_t* comm)
+{
+    return ((comm != NULL) && (comm != MPI_COMM_NULL));
+}
+
+/**
+ * @brief Checks if a peer rank is inside the comm range.
+ *
+ * @param comm Target communicator.
+ * @param rank Peer rank to be evaluated.
+ *
+ * @returns Zero if the rank is not in the comm range, and a non-zero
+ * value otherwise.
+ */
+static inline int mpi_comm_peer_rank_is_valid(mpi_communicator_t* comm, int rank)
+{
+    return (WITHIN(rank, 0, mpi_group_size(comm->group)));
 }
 
 /**

@@ -43,7 +43,7 @@ PUBLIC int MPI_Comm_size(MPI_Comm comm, int *size)
 	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
 
 	/* Bad communicator. */
-	if ((comm == NULL) || (comm == MPI_COMM_NULL))
+	if (!mpi_comm_is_valid(comm))
 		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME));
 
 	/* Bad size holder. */
