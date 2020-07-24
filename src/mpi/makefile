@@ -34,7 +34,8 @@ SRC = $(wildcard group/*.c)        \
       $(wildcard communicator/*.c) \
       $(wildcard errhandler/*.c)   \
       $(wildcard runtime/*.c)      \
-      $(wildcard datatype/*.c)
+      $(wildcard datatype/*.c)     \
+      $(wildcard pt2pt/*.c)
 
 OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 

@@ -32,10 +32,7 @@ include/nanvix/cc.h
 include/nanvix/const.h
 include/nanvix/hal.h
 include/nanvix/hlib.h
-include/posix/sys/_intsup.h
-include/posix/sys/features.h
-include/posix/sys/types.h
-include/posix/sys/stat.h
+include/posix/sys/*
 include/posix/decl.h
 include/posix/errno.h
 include/posix/fcntl.h
