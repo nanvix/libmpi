@@ -41,9 +41,9 @@ OBJ_CLASS_INSTANCE(mpi_process_t, &process_construct, &process_destruct, sizeof(
  *
  * @note Instead a #define, this variable should be initialized in execution time.
  */
-PRIVATE int _processes_nr = NANVIX_PROC_MAX;
+PRIVATE int _processes_nr = MPI_PROCESSES_NR;
 
-PRIVATE int _active_nodes[NANVIX_PROC_MAX];
+PRIVATE int _active_nodes[MPI_PROCESSES_NR];
 
 /* @note Const barrier parameter workaround. */
 PRIVATE const int *_active_nodes_addr = _active_nodes;

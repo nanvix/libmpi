@@ -30,6 +30,13 @@
 #include <mputil/object.h>
 
 /**
+ * @brief Defines the number of active MPI_PROCESSES.
+ */
+#ifndef MPI_PROCESSES_NR
+#define MPI_PROCESSES_NR NANVIX_PROC_MAX
+#endif
+
+/**
  * @brief Base compensation for clusters know their local mpi_id.
  */
 #define MPI_PROCESSES_COMPENSATION SPAWNERS_NUM
