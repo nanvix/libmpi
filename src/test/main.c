@@ -150,11 +150,11 @@ int __main3(int argc, char *argv[])
 
 		uprintf("Rank %d preparing to send to rank %d", rank, remote);
 
-		MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD);
+		uassert(MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
 
 		uprintf("Waiting for reply...");
 
-		MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		uassert(MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
 	}
 	else
 	{
@@ -162,20 +162,66 @@ int __main3(int argc, char *argv[])
 
 		uprintf("Rank %d waiting to receive from rank %d", rank, remote);
 
-		MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		uassert(MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
 
 		uprintf("Sending reply...");
 
-		MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD);
+		uassert(MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
 	}
 
-	uprintf("Communication done!");
+	uprintf("Pairs Communication done!");
 
 	uassert(inbuffer == remote);
 
 	uprintf("Successful communication :)");
 
 	uprintf("---------------------------------------------");
+
+	/* Gather communication. */
+	if (rank == 0)
+	{
+		/* Communication test. */
+		MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+		/* Reads odd ranks. */
+		for (remote = 1; remote < size; remote += 2)
+		{
+			inbuffer = 0;
+
+			uprintf("Rank %d waiting to receive from rank %d", rank, remote);
+
+			uassert(MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
+
+			uassert(inbuffer == remote);
+		}
+
+		/* Reads even ranks. */
+		for (remote = 2; remote < size; remote += 2)
+		{
+			uprintf("Rank %d waiting to receive from rank %d", rank, remote);
+
+			uassert(MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
+
+			uassert(inbuffer == remote);
+		}
+	}
+	else
+	{
+		remote = 0;
+
+		uprintf("Rank %d preparing to send to rank %d", rank, remote);
+
+		uassert(MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
+	}
+
+	if (rank == 0)
+	{
+		uprintf("Requisition Queue done!");
+		uprintf("Successful communication :)");
+	}
+
+	uprintf("---------------------------------------------");
+
 
 	/* Finalization. */
 	MPI_Finalize();
@@ -196,3 +242,4 @@ int __main3(int argc, char *argv[])
 
 	return (0);
 }
+

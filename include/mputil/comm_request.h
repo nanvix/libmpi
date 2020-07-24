@@ -30,10 +30,33 @@
  */
 struct comm_request
 {
-	int cid;           /* Request context. */
-	int src;           /* Source.          */
-	int tag;           /* Message tag.     */
-	int received_size; /* Received size.   */
+	int16_t cid;           /* Request context. */
+	int16_t src;           /* Source.          */
+	int32_t tag;           /* Message tag.     */
+	int32_t received_size; /* Received size.   */
+};
+
+/**
+ * @brief Struct that defines a message to establish communication.
+ */
+struct comm_message
+{
+	struct comm_request req; /**< Request information.  */
+
+	union
+	{
+		struct
+		{
+			uint16_t datatype;   /**< Datatype.     */
+			size_t size;         /**< Message size. */
+			uint8_t portal_port; /**< Port Number.  */
+		} send;
+
+		struct
+		{
+			int errcode; /* Function return. */
+		} ret;
+	} msg;
 };
 
 /**
@@ -51,7 +74,7 @@ extern void comm_request_build(int cid, int src, int tag, struct comm_request *r
 /**
  * @brief Allocates a new request and registers it in the requisitions queue.
  *
- * @param req Requisition to be registered.
+ * @param msg Requisition to be registered.
  *
  * @returns Upon successful completion, zero is returned. Upon failure, a negative
  * error code is returned instead.
@@ -61,7 +84,17 @@ extern void comm_request_build(int cid, int src, int tag, struct comm_request *r
  * @note This function needs to copy the req attributes in a safe structure, not only
  * storing its reference.
  */
-extern int comm_request_register(struct comm_request *req);
+extern int comm_request_register(struct comm_message *msg);
+
+/**
+ * @brief Search into Request Queue.
+ *
+ * @param msg Message with a valid request information.
+ *
+ * @returns If a matched request is found, consume it and returns non-zero
+ * value, zero, otherwise.
+ */
+extern int comm_request_search(struct comm_message *msg);
 
 /**
  * @brief Compares if two communication requisitions are equal.
