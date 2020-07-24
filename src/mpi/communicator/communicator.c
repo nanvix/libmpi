@@ -146,6 +146,31 @@ PUBLIC int mpi_comm_group(mpi_communicator_t *comm, mpi_group_t **group)
 }
 
 /**
+ * @todo Provide a detailed description.
+ */
+PUBLIC int mpi_comm_get_proc(mpi_communicator_t *comm, int rank, mpi_process_t **proc)
+{
+	int ret;
+
+	/* Bad communicator. */
+	if (comm == NULL)
+		return (MPI_ERR_COMM);
+
+	/* Bad proc receptor. */
+	if (proc == NULL)
+		return (MPI_ERR_ARG);
+
+	/* Invalid rank. */
+	if (!mpi_comm_peer_rank_is_valid(comm, rank))
+		return (MPI_ERR_RANK);
+
+	/* Gets the proc reference from within comm group. */
+	ret = mpi_group_get_proc(comm->group, rank, proc);
+
+	return (ret);
+}
+
+/**
  * @see mpi_comm_init() at communicator.h.
  *
  * @todo See necessity of defining a communicators array.
@@ -167,8 +192,8 @@ PUBLIC int mpi_comm_init(void)
 
 	_mpi_comm_world.group         = group;
 	_mpi_comm_world.my_rank       = group->my_rank;
-	_mpi_comm_world.pt2pt_cid     = MPI_CONTEXT_BASE;
-	_mpi_comm_world.coll_cid      = (MPI_CONTEXT_BASE + 1);
+	_mpi_comm_world.pt2pt_cid     = 0;
+	_mpi_comm_world.coll_cid      = 1;
 	_mpi_comm_world.error_handler = MPI_ERRORS_ARE_FATAL;
 	OBJ_RETAIN(_mpi_comm_world.error_handler);
 
@@ -184,7 +209,7 @@ PUBLIC int mpi_comm_init(void)
 
 	_mpi_comm_self.group         = group;
 	_mpi_comm_self.my_rank       = group->my_rank;
-	_mpi_comm_self.pt2pt_cid     = (MPI_CONTEXT_BASE + 2);
+	_mpi_comm_self.pt2pt_cid     = 2;
 	_mpi_comm_self.coll_cid      = MPI_UNDEFINED;
 	_mpi_comm_self.error_handler = MPI_ERRORS_ARE_FATAL;
 	OBJ_RETAIN(_mpi_comm_self.error_handler);

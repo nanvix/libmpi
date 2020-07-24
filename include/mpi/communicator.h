@@ -162,6 +162,19 @@ static inline int mpi_comm_get_coll_cid(mpi_communicator_t* comm)
 extern int mpi_comm_group(mpi_communicator_t *comm, mpi_group_t **group);
 
 /**
+ * @brief Extracts the proc with rank @p rank in @p comm.
+ *
+ * @param comm The target communicator.
+ * @param rank The associated rank of the desired proc.
+ * @param proc Pointer to receive the process reference.
+ *
+ * @returns Upon successful completion, MPI_SUCCESS is returned with the
+ * proc reference on @p proc. An MPI_ERROR_CODE is returned instead with
+ * proc pointing to NULL.
+ */
+extern int mpi_comm_get_proc(mpi_communicator_t *comm, int rank, mpi_process_t **proc);
+
+/**
  * @brief Initializes the communicators submodule.
  *
  * @returns Upon successful completion, zero is returned. A
