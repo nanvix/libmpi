@@ -36,38 +36,38 @@ OBJ_CLASS_INSTANCE(mpi_datatype_t, &mpi_datatype_construct,
 /**
  * @brief Predefined datatypes.
  */
-const mpi_datatype_t _mpi_datatype_char                = MPI_DATATYPE_INITIALIZER_CHAR;
-const mpi_datatype_t _mpi_datatype_short               = MPI_DATATYPE_INITIALIZER_SHORT;
-const mpi_datatype_t _mpi_datatype_int                 = MPI_DATATYPE_INITIALIZER_INT;
-const mpi_datatype_t _mpi_datatype_long                = MPI_DATATYPE_INITIALIZER_LONG;
-const mpi_datatype_t _mpi_datatype_long_long           = MPI_DATATYPE_INITIALIZER_LONG_LONG;
-const mpi_datatype_t _mpi_datatype_signed_char         = MPI_DATATYPE_INITIALIZER_SIGNED_CHAR;
-const mpi_datatype_t _mpi_datatype_unsigned_char       = MPI_DATATYPE_INITIALIZER_UNSIGNED_CHAR;
-const mpi_datatype_t _mpi_datatype_unsigned_short      = MPI_DATATYPE_INITIALIZER_UNSIGNED_SHORT;
-const mpi_datatype_t _mpi_datatype_unsigned            = MPI_DATATYPE_INITIALIZER_UNSIGNED;
-const mpi_datatype_t _mpi_datatype_unsigned_long       = MPI_DATATYPE_INITIALIZER_UNSIGNED_LONG;
-const mpi_datatype_t _mpi_datatype_unsigned_long_long  = MPI_DATATYPE_INITIALIZER_UNSIGNED_LONG_LONG;
-const mpi_datatype_t _mpi_datatype_float               = MPI_DATATYPE_INITIALIZER_FLOAT;
-const mpi_datatype_t _mpi_datatype_double              = MPI_DATATYPE_INITIALIZER_DOUBLE;
-const mpi_datatype_t _mpi_datatype_long_double         = MPI_DATATYPE_INITIALIZER_LONG_DOUBLE;
-const mpi_datatype_t _mpi_datatype_wchar               = MPI_DATATYPE_INITIALIZER_WCHAR;
-const mpi_datatype_t _mpi_datatype_cbool               = MPI_DATATYPE_INITIALIZER_C_BOOL;
-const mpi_datatype_t _mpi_datatype_int8                = MPI_DATATYPE_INITIALIZER_INT8;
-const mpi_datatype_t _mpi_datatype_int16               = MPI_DATATYPE_INITIALIZER_INT16;
-const mpi_datatype_t _mpi_datatype_int32               = MPI_DATATYPE_INITIALIZER_INT32;
-const mpi_datatype_t _mpi_datatype_int64               = MPI_DATATYPE_INITIALIZER_INT64;
-const mpi_datatype_t _mpi_datatype_uint8               = MPI_DATATYPE_INITIALIZER_UINT8;
-const mpi_datatype_t _mpi_datatype_uint16              = MPI_DATATYPE_INITIALIZER_UINT16;
-const mpi_datatype_t _mpi_datatype_uint32              = MPI_DATATYPE_INITIALIZER_UINT32;
-const mpi_datatype_t _mpi_datatype_uint64              = MPI_DATATYPE_INITIALIZER_UINT64;
-const mpi_datatype_t _mpi_datatype_ccomplex            = MPI_DATATYPE_INITIALIZER_C_COMPLEX;
-const mpi_datatype_t _mpi_datatype_double_complex      = MPI_DATATYPE_INITIALIZER_C_DOUBLE_COMPLEX;
-const mpi_datatype_t _mpi_datatype_long_double_complex = MPI_DATATYPE_INITIALIZER_C_LONG_DOUBLE_COMPLEX;
-const mpi_datatype_t _mpi_datatype_byte                = MPI_DATATYPE_INITIALIZER_BYTE;
-const mpi_datatype_t _mpi_datatype_packed              = MPI_DATATYPE_INITIALIZER_PACKED;
-const mpi_datatype_t _mpi_datatype_aint                = MPI_DATATYPE_INITIALIZER_AINT;
-const mpi_datatype_t _mpi_datatype_offset              = MPI_DATATYPE_INITIALIZER_OFFSET;
-const mpi_datatype_t _mpi_datatype_count               = MPI_DATATYPE_INITIALIZER_COUNT;
+mpi_datatype_t _mpi_datatype_char                = MPI_DATATYPE_INITIALIZER_CHAR;
+mpi_datatype_t _mpi_datatype_short               = MPI_DATATYPE_INITIALIZER_SHORT;
+mpi_datatype_t _mpi_datatype_int                 = MPI_DATATYPE_INITIALIZER_INT;
+mpi_datatype_t _mpi_datatype_long                = MPI_DATATYPE_INITIALIZER_LONG;
+mpi_datatype_t _mpi_datatype_long_long           = MPI_DATATYPE_INITIALIZER_LONG_LONG;
+mpi_datatype_t _mpi_datatype_signed_char         = MPI_DATATYPE_INITIALIZER_SIGNED_CHAR;
+mpi_datatype_t _mpi_datatype_unsigned_char       = MPI_DATATYPE_INITIALIZER_UNSIGNED_CHAR;
+mpi_datatype_t _mpi_datatype_unsigned_short      = MPI_DATATYPE_INITIALIZER_UNSIGNED_SHORT;
+mpi_datatype_t _mpi_datatype_unsigned            = MPI_DATATYPE_INITIALIZER_UNSIGNED;
+mpi_datatype_t _mpi_datatype_unsigned_long       = MPI_DATATYPE_INITIALIZER_UNSIGNED_LONG;
+mpi_datatype_t _mpi_datatype_unsigned_long_long  = MPI_DATATYPE_INITIALIZER_UNSIGNED_LONG_LONG;
+mpi_datatype_t _mpi_datatype_float               = MPI_DATATYPE_INITIALIZER_FLOAT;
+mpi_datatype_t _mpi_datatype_double              = MPI_DATATYPE_INITIALIZER_DOUBLE;
+mpi_datatype_t _mpi_datatype_long_double         = MPI_DATATYPE_INITIALIZER_LONG_DOUBLE;
+mpi_datatype_t _mpi_datatype_wchar               = MPI_DATATYPE_INITIALIZER_WCHAR;
+mpi_datatype_t _mpi_datatype_cbool               = MPI_DATATYPE_INITIALIZER_C_BOOL;
+mpi_datatype_t _mpi_datatype_int8                = MPI_DATATYPE_INITIALIZER_INT8;
+mpi_datatype_t _mpi_datatype_int16               = MPI_DATATYPE_INITIALIZER_INT16;
+mpi_datatype_t _mpi_datatype_int32               = MPI_DATATYPE_INITIALIZER_INT32;
+mpi_datatype_t _mpi_datatype_int64               = MPI_DATATYPE_INITIALIZER_INT64;
+mpi_datatype_t _mpi_datatype_uint8               = MPI_DATATYPE_INITIALIZER_UINT8;
+mpi_datatype_t _mpi_datatype_uint16              = MPI_DATATYPE_INITIALIZER_UINT16;
+mpi_datatype_t _mpi_datatype_uint32              = MPI_DATATYPE_INITIALIZER_UINT32;
+mpi_datatype_t _mpi_datatype_uint64              = MPI_DATATYPE_INITIALIZER_UINT64;
+mpi_datatype_t _mpi_datatype_ccomplex            = MPI_DATATYPE_INITIALIZER_C_COMPLEX;
+mpi_datatype_t _mpi_datatype_double_complex      = MPI_DATATYPE_INITIALIZER_C_DOUBLE_COMPLEX;
+mpi_datatype_t _mpi_datatype_long_double_complex = MPI_DATATYPE_INITIALIZER_C_LONG_DOUBLE_COMPLEX;
+mpi_datatype_t _mpi_datatype_byte                = MPI_DATATYPE_INITIALIZER_BYTE;
+mpi_datatype_t _mpi_datatype_packed              = MPI_DATATYPE_INITIALIZER_PACKED;
+mpi_datatype_t _mpi_datatype_aint                = MPI_DATATYPE_INITIALIZER_AINT;
+mpi_datatype_t _mpi_datatype_offset              = MPI_DATATYPE_INITIALIZER_OFFSET;
+mpi_datatype_t _mpi_datatype_count               = MPI_DATATYPE_INITIALIZER_COUNT;
 
 /**
  * @brief Null datatype.
@@ -131,6 +131,28 @@ PRIVATE void mpi_datatype_construct(mpi_datatype_t * datatype)
 PRIVATE void mpi_datatype_destruct(mpi_datatype_t * datatype)
 {
 	uassert(datatype != NULL);
+}
+
+/**
+ * @brief Provide a detailed description.
+ *
+ * @note This dummy implementation assumes that only the
+ * predefined datatypes are available to be used.
+ */
+PUBLIC int mpi_datatypes_match(int type1, int type2)
+{
+	uassert(WITHIN(type1, 0, MPI_DATATYPE_MAX_PREDEFINED));
+	uassert(WITHIN(type2, 0, MPI_DATATYPE_MAX_PREDEFINED));
+
+	/* Same datatype. */
+	if (type1 == type2)
+		return (1);
+
+	/* One of they is MPI_BYTE. */
+	if ((type1 == MPI_DATATYPE_BYTE) || (type2 == MPI_DATATYPE_BYTE))
+		return (1);
+
+	return (0);
 }
 
 /**

@@ -26,6 +26,16 @@
 #define NANVIX_LIBMPI_MPI_H_
 
 #include <posix/stdint.h>
+#include <mpi/mpi_errors.h>
+
+/**
+ * @brief Defines the Upper bound for tag values.
+ *
+ * @note This constant is implementation dependant and 32767 is the minimum value.
+ *
+ * @todo See where to define this constant correctly.
+ */
+#define UB 32768
 
 /**
  * @note Temporary definitions. Declared only for convenience on errhandlers definition.
@@ -123,91 +133,6 @@ typedef void MPI_File_errhandler_function(MPI_File *, int *, ...);
 #define MPI_UNEQUAL   3
 
 /**
- * @brief Error Codes and Classes.
- */
-#define MPI_SUCCESS                    0 /* No error. */
-#define MPI_ERR_BUFFER                 1 /* Invalid buffer pointer. */
-#define MPI_ERR_COUNT                  2 /* Invalid count argument. */
-#define MPI_ERR_TYPE                   3 /* Invalid datatype argument. */
-#define MPI_ERR_TAG                    4 /* Invalid tag argument. */
-#define MPI_ERR_COMM                   5 /* Invalid communicator. */
-#define MPI_ERR_RANK                   6 /* Invalid rank. */
-#define MPI_ERR_REQUEST                7 /* Invalid request (handle). */
-#define MPI_ERR_ROOT                   8 /* Invalid root. */
-#define MPI_ERR_GROUP                  9 /* Invalid group. */
-#define MPI_ERR_OP                    10 /* Invalid operation. */
-#define MPI_ERR_TOPOLOGY              11 /* Invalid topology. */
-#define MPI_ERR_DIMS                  12 /* Invalid dimension argument. */
-#define MPI_ERR_ARG                   13 /* Invalid argument of other kind. */
-#define MPI_ERR_UNKNOWN               14 /* Unknown error. */
-#define MPI_ERR_TRUNCATE              15 /* Message truncated on receive. */
-#define MPI_ERR_OTHER                 16 /* Known error not in this list. */
-#define MPI_ERR_INTERN                17 /* Internal MPI impl error. */
-#define MPI_ERR_PENDING               18 /* Pending request. */
-#define MPI_ERR_IN_STATUS             19 /* Error code is in status. */
-#define MPI_ERR_ACCESS                20 /* Permission denied. */
-#define MPI_ERR_AMODE                 21 /* Error related to amode on I/O. */
-#define MPI_ERR_ASSERT                22 /* Invalid assert argument. */
-#define MPI_ERR_BAD_FILE              23 /* Invalid file name. */
-#define MPI_ERR_BASE                  24 /* Invalid base to MPI_FREE_MEM. */
-#define MPI_ERR_CONVERSION            25 /* Error in a user conv function. */
-#define MPI_ERR_DISP                  26 /* Invalid disp argument. */
-#define MPI_ERR_DUP_DATAREP           27 /* Already defined data representation. */
-#define MPI_ERR_FILE_EXISTS           28 /* File exists. */
-#define MPI_ERR_FILE_IN_USE           29 /* File currently open by some process. */
-#define MPI_ERR_FILE                  30 /* Invalid file handle. */
-#define MPI_ERR_INFO_KEY              31 /* Key longer than MPI_MAX_INFO_KEY. */
-#define MPI_ERR_INFO_NOKEY            32 /* Invalid key to MPI_INFO_DELETE. */
-#define MPI_ERR_INFO_VALUE            33 /* Value longer than MPI_MAX_INFO_VAL. */
-#define MPI_ERR_INFO                  34 /* Invalid info argument. */
-#define MPI_ERR_IO                    35 /* Other I/O error. */
-#define MPI_ERR_KEYVAL                36 /* Invalid keyval has been passed. */
-#define MPI_ERR_LOCKTYPE              37 /* Invalid locktype argument. */
-#define MPI_ERR_NAME                  38 /* Invalid srvc name to MPI_LOOKUP_NAME. */
-#define MPI_ERR_NO_MEM                39 /* Memory is exhausted. */
-#define MPI_ERR_NOT_SAME              40 /* Collective arg not identical on all procs. */
-#define MPI_ERR_NO_SPACE              41 /* Not enough space. */
-#define MPI_ERR_NO_SUCH_FILE          42 /* File does not exist. */
-#define MPI_ERR_PORT                  43 /* Invalid port name to MPI_COMM_CONNECT. */
-#define MPI_ERR_QUOTA                 44 /* Quota exceeded. */
-#define MPI_ERR_READ_ONLY             45 /* Read-only file or file system. */
-#define MPI_ERR_RMA_ATTACH            46
-#define MPI_ERR_RMA_CONFLICT          47 /* Conflicting accesses to window. */
-#define MPI_ERR_RMA_RANGE             48
-#define MPI_ERR_RMA_SHARED            49
-#define MPI_ERR_RMA_SYNC              50 /* Wrong synchronization of RMA calls. */
-#define MPI_ERR_RMA_FLAVOR            51
-#define MPI_ERR_SERVICE               52 /* Invalid srvc nameto MPI_UNPUBLISH_NAME. */
-#define MPI_ERR_SIZE                  53 /* Invalid size argument. */
-#define MPI_ERR_SPAWN                 54 /* Error in spawning processes. */
-#define MPI_ERR_UNSUPPORTED_DATAREP   55 /* Unsupp datarep to MPI_FILE_SET_VIEW. */
-#define MPI_ERR_UNSUPPORTED_OPERATION 56 /* Unsupported operation. */
-#define MPI_ERR_WIN                   57 /* Invalid win argument. */
-#define MPI_T_ERR_CANNOT_INIT         58
-#define MPI_T_ERR_NOT_INITIALIZED     59
-#define MPI_T_ERR_MEMORY              60
-#define MPI_T_ERR_INVALID             61
-#define MPI_T_ERR_INVALID_INDEX       62
-#define MPI_T_ERR_INVALID_ITEM        63
-#define MPI_T_ERR_INVALID_SESSION     64
-#define MPI_T_ERR_INVALID_HANDLE      65
-#define MPI_T_ERR_INVALID_NAME        66
-#define MPI_T_ERR_OUT_OF_HANDLES      67
-#define MPI_T_ERR_OUT_OF_SESSIONS     68
-#define MPI_T_ERR_CVAR_SET_NOT_NOW    69
-#define MPI_T_ERR_CVAR_SET_NEVER      70
-#define MPI_T_ERR_PVAR_NO_WRITE       71
-#define MPI_T_ERR_PVAR_NO_STARTSTOP   72
-#define MPI_T_ERR_PVAR_NO_ATOMIC      73
-
-/**
- * @note Used to sanytize codes validity. Should gave some room for user added error codes.
- */
-#define MPI_ERR_LASTCODE              92 /* Last error code . */
-
-/* End of error classes definitions. */
-
-/**
  * @brief Supported thread levels constants.
  */
 #define MPI_THREAD_SINGLE     0
@@ -218,40 +143,40 @@ typedef void MPI_File_errhandler_function(MPI_File *, int *, ...);
 /**
  * @brief Predefined MPI_Datatype external structures.
  */
-extern const struct mpi_datatype_t _mpi_datatype_char;
-extern const struct mpi_datatype_t _mpi_datatype_short;
-extern const struct mpi_datatype_t _mpi_datatype_int;
-extern const struct mpi_datatype_t _mpi_datatype_long;
-extern const struct mpi_datatype_t _mpi_datatype_long_long;
-extern const struct mpi_datatype_t _mpi_datatype_long_long;
-extern const struct mpi_datatype_t _mpi_datatype_signed_char;
-extern const struct mpi_datatype_t _mpi_datatype_unsigned_char;
-extern const struct mpi_datatype_t _mpi_datatype_unsigned_short;
-extern const struct mpi_datatype_t _mpi_datatype_unsigned;
-extern const struct mpi_datatype_t _mpi_datatype_unsigned_long;
-extern const struct mpi_datatype_t _mpi_datatype_unsigned_long_long;
-extern const struct mpi_datatype_t _mpi_datatype_float;
-extern const struct mpi_datatype_t _mpi_datatype_double;
-extern const struct mpi_datatype_t _mpi_datatype_long_double;
-extern const struct mpi_datatype_t _mpi_datatype_wchar;
-extern const struct mpi_datatype_t _mpi_datatype_cbool;
-extern const struct mpi_datatype_t _mpi_datatype_int8;
-extern const struct mpi_datatype_t _mpi_datatype_int16;
-extern const struct mpi_datatype_t _mpi_datatype_int32;
-extern const struct mpi_datatype_t _mpi_datatype_int64;
-extern const struct mpi_datatype_t _mpi_datatype_uint8;
-extern const struct mpi_datatype_t _mpi_datatype_uint16;
-extern const struct mpi_datatype_t _mpi_datatype_uint32;
-extern const struct mpi_datatype_t _mpi_datatype_uint64;
-extern const struct mpi_datatype_t _mpi_datatype_ccomplex;
-extern const struct mpi_datatype_t _mpi_datatype_ccomplex;
-extern const struct mpi_datatype_t _mpi_datatype_double_complex;
-extern const struct mpi_datatype_t _mpi_datatype_long_double_complex;
-extern const struct mpi_datatype_t _mpi_datatype_byte;
-extern const struct mpi_datatype_t _mpi_datatype_packed;
-extern const struct mpi_datatype_t _mpi_datatype_aint;
-extern const struct mpi_datatype_t _mpi_datatype_offset;
-extern const struct mpi_datatype_t _mpi_datatype_count;
+extern struct mpi_datatype_t _mpi_datatype_char;
+extern struct mpi_datatype_t _mpi_datatype_short;
+extern struct mpi_datatype_t _mpi_datatype_int;
+extern struct mpi_datatype_t _mpi_datatype_long;
+extern struct mpi_datatype_t _mpi_datatype_long_long;
+extern struct mpi_datatype_t _mpi_datatype_long_long;
+extern struct mpi_datatype_t _mpi_datatype_signed_char;
+extern struct mpi_datatype_t _mpi_datatype_unsigned_char;
+extern struct mpi_datatype_t _mpi_datatype_unsigned_short;
+extern struct mpi_datatype_t _mpi_datatype_unsigned;
+extern struct mpi_datatype_t _mpi_datatype_unsigned_long;
+extern struct mpi_datatype_t _mpi_datatype_unsigned_long_long;
+extern struct mpi_datatype_t _mpi_datatype_float;
+extern struct mpi_datatype_t _mpi_datatype_double;
+extern struct mpi_datatype_t _mpi_datatype_long_double;
+extern struct mpi_datatype_t _mpi_datatype_wchar;
+extern struct mpi_datatype_t _mpi_datatype_cbool;
+extern struct mpi_datatype_t _mpi_datatype_int8;
+extern struct mpi_datatype_t _mpi_datatype_int16;
+extern struct mpi_datatype_t _mpi_datatype_int32;
+extern struct mpi_datatype_t _mpi_datatype_int64;
+extern struct mpi_datatype_t _mpi_datatype_uint8;
+extern struct mpi_datatype_t _mpi_datatype_uint16;
+extern struct mpi_datatype_t _mpi_datatype_uint32;
+extern struct mpi_datatype_t _mpi_datatype_uint64;
+extern struct mpi_datatype_t _mpi_datatype_ccomplex;
+extern struct mpi_datatype_t _mpi_datatype_ccomplex;
+extern struct mpi_datatype_t _mpi_datatype_double_complex;
+extern struct mpi_datatype_t _mpi_datatype_long_double_complex;
+extern struct mpi_datatype_t _mpi_datatype_byte;
+extern struct mpi_datatype_t _mpi_datatype_packed;
+extern struct mpi_datatype_t _mpi_datatype_aint;
+extern struct mpi_datatype_t _mpi_datatype_offset;
+extern struct mpi_datatype_t _mpi_datatype_count;
 
 /**
  * @brief Predefined datatypes.
