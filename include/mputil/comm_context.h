@@ -26,6 +26,8 @@
 #define NANVIX_COMM_CONTEXT_H_
 
 #include <nanvix/limits.h>
+#include <mputil/proc.h>
+#include <mputil/comm_request.h>
 
 /**
  * @brief Defines the first context ID available for MPI communicators.
@@ -38,6 +40,13 @@
  * @brief Defines the max number of contexts to be allocated (excluding predefined).
  */
 #define MPI_CONTEXTS_ALLOCATE_MAX 0
+
+/**
+ * @brief Defines the available communication modes for pt2pt communication.
+ */
+#define COMM_READY_MODE    0
+#define COMM_BUFFERED_MODE 1
+#define COMM_SYNC_MODE     2
 
 /**
  * @brief Struct that defines a basic communication context.
@@ -65,7 +74,7 @@ extern int comm_context_allocate(void);
  * @brief Initializes the contexts submodule.
  *
  * @returns Upon successful completion, zero is returned. A
- * negative MPI error code is returned instead.
+ * negative error code is returned instead.
  */
 extern int comm_context_init(void);
 
@@ -76,5 +85,19 @@ extern int comm_context_init(void);
  * negative error code is returned instead.
  */
 extern int comm_context_finalize(void);
+
+/*============================================================================*
+ * Comm Operations.                                                           *
+ *============================================================================*/
+
+/**
+ * @todo Provide a detailed description.
+ */
+extern int send(int cid, const void *buf, size_t size, mpi_process_t *dest, int datatype, int tag, int mode);
+
+/**
+ * @todo Provide a detailed description.
+ */
+extern int recv(int cid, void *buf, size_t size, mpi_process_t *src, int datatype, struct comm_request *req);
 
 #endif /* NANVIX_COMM_CONTEXT_H_ */
