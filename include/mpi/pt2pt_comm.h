@@ -22,43 +22,34 @@
  * SOFTWARE.
  */
 
-#include <mpi/errhandler.h>
-#include <mpi/communicator.h>
-#include <mpi/group.h>
+#ifndef NANVIX_MPI_PT2PT_COMM_H_
+#define NANVIX_MPI_PT2PT_COMM_H_
+
 #include <mpi.h>
 
-static const char FUNC_NAME[] = "MPI_Group_size";
+/**
+ * @brief MPI Point-to-point communication modes.
+ *
+ * @note This enumeration should be in accord with the underlying constants
+ * defined in mputil/comm_context.h whose defines the communication protocols
+ * available in the underlying levels.
+ */
+typedef enum {
+	READY_MODE,
+	BUFFERED_MODE,
+	SYNC_MODE
+} mpi_comm_mode_t;
 
 /**
- * @brief Gets the number of processes in @p group.
- *
- * @param group Target group.
- * @param size  Location where will be stored the result.
- *
- * @returns Upon successful completion, MPI_SUCCESS is returned. An MPI errorcode
- * is returned instead.
+ * @brief Provide detailed description.
  */
-PUBLIC int MPI_Group_size(MPI_Group group, int *size)
-{
-	int ret;
+extern int mpi_send(const void *buf, int count, MPI_Datatype datatype, int dest,
+	                int tag, MPI_Comm comm, mpi_comm_mode_t mode);
 
-	/* Parameters checking. */
-	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
+/**
+ * @brief Provide detailed description.
+ */
+extern int mpi_recv(void *buf, int count, MPI_Datatype datatype, int source,
+	                int tag, MPI_Comm comm, MPI_Status *status);
 
-	ret = MPI_SUCCESS;
-
-	/* Bad group. */
-	if (!mpi_group_is_valid(group))
-		ret = MPI_ERR_GROUP;
-
-	/* Bad size holder. */
-	if (size == NULL)
-		ret = MPI_ERR_ARG;
-
-	/* Checks if there was an error and calls an error handler case positive. */
-	MPI_ERRHANDLER_CHECK(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
-
-	*size = mpi_group_size((mpi_group_t *) group);
-
-	return (MPI_SUCCESS);
-}
+#endif /* NANVIX_MPI_PT2PT_COMM_H_ */

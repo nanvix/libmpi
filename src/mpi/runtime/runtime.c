@@ -22,8 +22,9 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal.h>
 #include <mputil/proc.h>
+#include <mputil/comm_context.h>
+#include <mputil/comm_request.h>
 #include <mpi/mpiruntime.h>
 #include <mpi/errhandler.h>
 #include <mpi/group.h>
@@ -62,13 +63,6 @@ PUBLIC int mpi_init(int argc, char **argv)
 
 	spinlock_unlock(&_runtime_lock);
 
-	/* Initialize MPI_Datatypes. */
-	if ((ret = mpi_datatype_init()) != MPI_SUCCESS)
-	{
-		uprintf("ERROR!!! mpi_datatype_init() failed");
-		goto end;
-	}
-
 	/* Initializes processes. */
 	if ((ret = mpi_proc_init()) != MPI_SUCCESS)
 	{
@@ -76,9 +70,23 @@ PUBLIC int mpi_init(int argc, char **argv)
 		goto end;
 	}
 
+	/* Initialize MPI_Datatypes. */
+	if ((ret = mpi_datatype_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! mpi_datatype_init() failed");
+		goto end;
+	}
+
 	/* Initialize MPI_Ops. */
 
 	/* Initialize Buffered Send component. */
+
+	/* Initialize requests underlying module. */
+	if ((ret = comm_request_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! comm_request_init() failed");
+		goto end;
+	}
 
 	/* Initialize MPI_Requests. */
 
@@ -102,6 +110,13 @@ PUBLIC int mpi_init(int argc, char **argv)
 		goto end;
 	}
 
+	/* Initialize comm_contexts module. */
+	if ((ret = comm_context_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! comm_context_init() failed");
+		goto end;
+	}
+
 	/* Initialize MPI_Communicators. */
 	if ((ret = mpi_comm_init()) != MPI_SUCCESS)
 	{
@@ -115,7 +130,12 @@ PUBLIC int mpi_init(int argc, char **argv)
 
 	/* Initialize MPI_Attributes. */
 
-	/* Include a barrier here? */
+	/* Fence to ensure that everybody is at the same point in the initialization. */
+	if ((ret = mpi_std_fence()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! Could not ensure that all processes were initialized");
+		goto end;
+	}
 
 	/* Locks the runtime to set the mpi_state again. */
 	spinlock_lock(&_runtime_lock);
@@ -188,6 +208,13 @@ PUBLIC int mpi_finalize(void)
 		goto end;
 	}
 
+	/* Finalize comm_contexts module. */
+	if ((ret = comm_context_finalize()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! comm_context_finalize() failed");
+		goto end;
+	}
+
 	/* Finalize MPI_Groups. */
 	if ((ret = mpi_group_finalize()) != MPI_SUCCESS)
 	{
@@ -199,6 +226,13 @@ PUBLIC int mpi_finalize(void)
 	if ((ret = mpi_errhandler_finalize()) != MPI_SUCCESS)
 	{
 		uprintf("ERROR!!! mpi_errhandler_finalize() failed");
+		goto end;
+	}
+
+	/* Finalize requests underlying module. */
+	if ((ret = comm_request_finalize()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! comm_request_finalize() failed");
 		goto end;
 	}
 

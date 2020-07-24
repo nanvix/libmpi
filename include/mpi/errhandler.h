@@ -139,6 +139,19 @@ extern int mpi_errhandler_invoke(mpi_errhandler_t *errhandler, void *mpi_object,
                                  int type, int errcode, const char *message);
 
 /**
+ * @brief Checks if an error handler pointer is valid.
+ *
+ * @param errhandler Target error handler.
+ *
+ * @returns Zero if the error handler is not valid, and a non-zero
+ * value otherwise.
+ */
+static inline int mpi_errhandler_is_valid(mpi_errhandler_t* errhandler)
+{
+    return ((errhandler != NULL) && (errhandler != MPI_ERRHANDLER_NULL));
+}
+
+/**
  * @brief Initializes the error handling submodule.
  *
  * @returns Upon successful completion, zero is returned. A

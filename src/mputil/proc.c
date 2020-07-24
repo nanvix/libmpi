@@ -227,7 +227,7 @@ PUBLIC int mpi_proc_init(void)
 	uassert(_local_proc != NULL);
 
 	/* Register the local process in the system distributed lookup table. */
-	if ((ret = nanvix_setpname(_local_proc->name)) < 0)
+	if ((ret = nanvix_name_link(knode_get_num(), _local_proc->name)) < 0)
 		goto error;
 
 	return (0);

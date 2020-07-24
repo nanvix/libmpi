@@ -22,25 +22,30 @@
  * SOFTWARE.
  */
 
-#include <mpi/errhandler.h>
+#include <mpi/pt2pt_comm.h>
 #include <mpi/communicator.h>
+#include <mpi/datatype.h>
 #include <mpi.h>
 
-static const char FUNC_NAME[] = "MPI_Comm_set_errhandler";
+static const char FUNC_NAME[] = "MPI_Send";
 
 /**
- * @brief Sets the MPI_Errhandler associated with @p comm.
+ * @brief Sends a message to a target process inside @p comm context.
  *
- * @param comm       Target communicator.
- * @param errhandler Error handler to be associated with @p group.
+ * @param buf      Data buffer to be sent.
+ * @param count    Number of @p datatype entries to in @p buf.
+ * @param datatype Type of data to be transfered.
+ * @param dest     Target process rank.
+ * @param tag      Message identifier.
+ * @param comm     Communicator that defines the context of communication.
  *
  * @returns Upon successful completion, MPI_SUCCESS is returned. An MPI errorcode
  * is returned instead.
  */
-PUBLIC int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
+PUBLIC int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm)
 {
-	int ret;
-	mpi_errhandler_t *tmp;
+	int ret;              /* Function return. */
+	mpi_comm_mode_t mode; /* Send mode.       */
 
 	/* Parameters checking. */
 	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
@@ -51,27 +56,42 @@ PUBLIC int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
 
 	ret = MPI_SUCCESS;
 
-	/* Bad errhandler reference. */
-	if (!mpi_errhandler_is_valid(errhandler))
-		ret = MPI_ERR_ARG;
+	/* Bad count. */
+	if (count < 0)
+		ret = MPI_ERR_COUNT;
 
-	/* Bad errhandler_type. */
-	if ((errhandler->errhandler_object_type != MPI_ERRHANDLER_TYPE_COMM) &&
-		(errhandler->errhandler_object_type != MPI_ERRHANDLER_TYPE_PREDEFINED))
-	{
-		ret = MPI_ERR_ARG;
-	}
+	/* Bad tag. */
+	if (!WITHIN(tag, 0, UB))
+		ret = MPI_ERR_TAG;
+
+	/* Bad buffer. */
+	if ((buf == NULL) && (count > 0))
+		ret = MPI_ERR_BUFFER;
+
+	/* Bad datatype. */
+	if (!mpi_datatype_is_valid(datatype))
+		ret = MPI_ERR_TYPE;
+
+	/* Bad dest. */
+	if ((dest != MPI_PROC_NULL) && (!mpi_comm_peer_rank_is_valid(comm, dest)))
+		ret = MPI_ERR_RANK;
 
 	/* Checks if there was an error and calls an error handler case positive. */
 	MPI_ERRHANDLER_CHECK(ret, comm, ret, FUNC_NAME);
 
-	/* Associates the new error handler with @p comm. */
-	tmp = comm->error_handler;
-	comm->error_handler = errhandler;
+	/* Null send. */
+	if (dest == MPI_PROC_NULL)
+		return (MPI_SUCCESS);
 
-	/* Updates the error handlers refcount. */
-	OBJ_RETAIN(errhandler);
-	OBJ_RELEASE(tmp);
+	/**
+	 * @todo Add logic to choose the best send mode here.
+	 */
+	mode = SYNC_MODE;
+
+	ret = mpi_send(buf, count, datatype, dest, tag, comm, mode);
+
+	/* Checks if the send op was successful. */
+	MPI_ERRHANDLER_CHECK(ret, comm, ret, FUNC_NAME);	
 
 	return (MPI_SUCCESS);
 }

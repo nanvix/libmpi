@@ -22,43 +22,73 @@
  * SOFTWARE.
  */
 
-#include <mpi/errhandler.h>
-#include <mpi/communicator.h>
-#include <mpi/group.h>
+#include <nanvix/ulib.h>
+#include <mputil/comm_request.h>
 #include <mpi.h>
 
-static const char FUNC_NAME[] = "MPI_Group_size";
+/**
+ * @todo Provide a detailed description.
+ */
+PUBLIC void comm_request_build(int cid, int src, int tag, struct comm_request *req)
+{
+	uassert(req != NULL);
+
+	req->cid = cid;
+	req->src = src;
+	req->tag = tag;
+}
 
 /**
- * @brief Gets the number of processes in @p group.
- *
- * @param group Target group.
- * @param size  Location where will be stored the result.
- *
- * @returns Upon successful completion, MPI_SUCCESS is returned. An MPI errorcode
- * is returned instead.
+ * @todo Provide a detailed description.
  */
-PUBLIC int MPI_Group_size(MPI_Group group, int *size)
+PUBLIC int comm_request_match(struct comm_request *req1, struct comm_request *req2)
 {
-	int ret;
+	uassert(req1 != NULL);
+	uassert(req2 != NULL);
 
-	/* Parameters checking. */
-	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
+	/* Check cid. */
+	if (req1->cid != req2->cid)
+		return (0);
 
-	ret = MPI_SUCCESS;
+	/* Check src. */
+	if ((req1->src != MPI_ANY_SOURCE) && (req2->src != MPI_ANY_SOURCE))
+	{
+		if (req1->src != req2->src)
+			return (0);
+	}
 
-	/* Bad group. */
-	if (!mpi_group_is_valid(group))
-		ret = MPI_ERR_GROUP;
+	/* Check tag. */
+	if ((req1->tag != MPI_ANY_TAG) && (req2->tag != MPI_ANY_TAG))
+	{
+		if (req1->tag != req2->tag)
+			return (0);
+	}
 
-	/* Bad size holder. */
-	if (size == NULL)
-		ret = MPI_ERR_ARG;
+	return (1);
+}
 
-	/* Checks if there was an error and calls an error handler case positive. */
-	MPI_ERRHANDLER_CHECK(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
+/**
+ * @todo Implement this function.
+ */
+PUBLIC int comm_request_register(struct comm_request *req)
+{
+	UNUSED(req);
 
-	*size = mpi_group_size((mpi_group_t *) group);
+	return (0);
+}
 
-	return (MPI_SUCCESS);
+/**
+ * @todo Implement this function.
+ */
+PUBLIC int comm_request_init(void)
+{
+	return (0);
+}
+
+/**
+ * @todo Implement this function.
+ */
+PUBLIC int comm_request_finalize(void)
+{
+	return (0);
 }

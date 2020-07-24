@@ -25,6 +25,7 @@
 #ifndef NANVIX_MPI_COMMUNICATOR_H_
 #define NANVIX_MPI_COMMUNICATOR_H_
 
+#include <nanvix/hlib.h>
 #include <mputil/object.h>
 #include <mpi/group.h>
 #include <mpi/errhandler.h>
@@ -110,6 +111,33 @@ static inline int mpi_comm_get_pt2pt_cid(mpi_communicator_t* comm)
 }
 
 /**
+ * @brief Checks if a communicator pointer is valid.
+ *
+ * @param comm Target communicator.
+ *
+ * @returns Zero if the communicator is not valid, and a non-zero
+ * value otherwise.
+ */
+static inline int mpi_comm_is_valid(mpi_communicator_t* comm)
+{
+    return ((comm != NULL) && (comm != MPI_COMM_NULL));
+}
+
+/**
+ * @brief Checks if a peer rank is inside the comm range.
+ *
+ * @param comm Target communicator.
+ * @param rank Peer rank to be evaluated.
+ *
+ * @returns Zero if the rank is not in the comm range, and a non-zero
+ * value otherwise.
+ */
+static inline int mpi_comm_peer_rank_is_valid(mpi_communicator_t* comm, int rank)
+{
+    return (WITHIN(rank, 0, mpi_group_size(comm->group)));
+}
+
+/**
  * @brief Gets the communicator collective cid.
  *
  * @param comm Target communicator.
@@ -132,6 +160,19 @@ static inline int mpi_comm_get_coll_cid(mpi_communicator_t* comm)
  * group pointing to NULL.
  */
 extern int mpi_comm_group(mpi_communicator_t *comm, mpi_group_t **group);
+
+/**
+ * @brief Extracts the proc with rank @p rank in @p comm.
+ *
+ * @param comm The target communicator.
+ * @param rank The associated rank of the desired proc.
+ * @param proc Pointer to receive the process reference.
+ *
+ * @returns Upon successful completion, MPI_SUCCESS is returned with the
+ * proc reference on @p proc. An MPI_ERROR_CODE is returned instead with
+ * proc pointing to NULL.
+ */
+extern int mpi_comm_get_proc(mpi_communicator_t *comm, int rank, mpi_process_t **proc);
 
 /**
  * @brief Initializes the communicators submodule.

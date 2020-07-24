@@ -45,7 +45,7 @@ PUBLIC int MPI_Group_free(MPI_Group *group)
 	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
 
 	/* Bad group. */
-	if ((group == NULL) || (*group == NULL) || (*group == MPI_GROUP_NULL))
+	if ((group == NULL) || (!mpi_group_is_valid(*group)))
 		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, FUNC_NAME));
 
 	ret = mpi_group_free((mpi_group_t **) group);

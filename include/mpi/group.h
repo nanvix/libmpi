@@ -79,6 +79,19 @@ extern mpi_group_t * mpi_group_allocate_w_procs(mpi_process_t ** procs, int grou
 extern int mpi_group_free(mpi_group_t ** group);
 
 /**
+ * @brief Checks if a group pointer is valid.
+ *
+ * @param group Target group.
+ *
+ * @returns Zero if the group is not valid, and a non-zero
+ * value otherwise.
+ */
+static inline int mpi_group_is_valid(mpi_group_t* group)
+{
+    return ((group != NULL) && (group != MPI_GROUP_NULL));
+}
+
+/**
  * @brief Gets the group size.
  *
  * @param group Group descriptor.
@@ -111,6 +124,19 @@ static inline int mpi_group_rank(mpi_group_t * group)
  * @note A NULL pointer in @p proc will set the group rank to MPI_UNDEFINED.
  */
 extern void mpi_group_set_rank(mpi_group_t * group, mpi_process_t * proc);
+
+/**
+ * @brief Gets the proc associated with rank @p rank.
+ *
+ * @param group Target group.
+ * @param rank  Target rank.
+ * @param proc  Pointer to hold the target process reference.
+ *
+ * @returns Upon successful completion, MPI_SUCCESS is returned and @p proc
+ * points to the desired proc. Uṕon failure, an MPI Error code is returned with
+ * @p proc pointing to NULL.
+ */
+extern int mpi_group_get_proc(mpi_group_t *group, int rank, mpi_process_t **proc);
 
 /**
  * @brief Increments the refcount of each process in @p group.

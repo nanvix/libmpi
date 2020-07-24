@@ -27,7 +27,7 @@
 #include <posix/errno.h>
 #include <mpi/communicator.h>
 #include <mpi/mpiruntime.h>
-#include <nanvix/limits.h>
+#include <mputil/comm_context.h>
 
 PRIVATE void mpi_comm_construct(mpi_communicator_t *);
 PRIVATE void mpi_comm_destruct(mpi_communicator_t *);
@@ -143,6 +143,31 @@ PUBLIC int mpi_comm_group(mpi_communicator_t *comm, mpi_group_t **group)
 	*group = comm->group;
 
 	return (MPI_SUCCESS);
+}
+
+/**
+ * @todo Provide a detailed description.
+ */
+PUBLIC int mpi_comm_get_proc(mpi_communicator_t *comm, int rank, mpi_process_t **proc)
+{
+	int ret;
+
+	/* Bad communicator. */
+	if (comm == NULL)
+		return (MPI_ERR_COMM);
+
+	/* Bad proc receptor. */
+	if (proc == NULL)
+		return (MPI_ERR_ARG);
+
+	/* Invalid rank. */
+	if (!mpi_comm_peer_rank_is_valid(comm, rank))
+		return (MPI_ERR_RANK);
+
+	/* Gets the proc reference from within comm group. */
+	ret = mpi_group_get_proc(comm->group, rank, proc);
+
+	return (ret);
 }
 
 /**
