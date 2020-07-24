@@ -56,6 +56,18 @@ typedef struct mpi_process_t mpi_process_t;
 OBJ_CLASS_DECLARATION(mpi_process_t);
 
 /**
+ * @brief Gets the process name.
+ *
+ * @param proc Target process.
+ *
+ * @returns The process symbolic name.
+ */
+static inline const char * process_name(mpi_process_t *proc)
+{
+	return (proc->name);
+}
+
+/**
  * @brief Allocates a new process for @p nodeid.
  *
  * @returns Upon successful completion, PID of the new
