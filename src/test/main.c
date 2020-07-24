@@ -37,10 +37,14 @@ int __main3(int argc, char *argv[])
 {
 	int flag;
 	int rank, rank2;
-	int size, size2;
+	size_t usize;
+	int size2, size;
 	int expected_rank;
 	MPI_Group group;
 	MPI_Errhandler errhandler;
+
+	int inbuffer, outbuffer;
+	int remote;
 
 	UNUSED(argc);
 	UNUSED(argv);
@@ -68,12 +72,12 @@ int __main3(int argc, char *argv[])
 	uassert(!flag);
 	uprintf("Asserted Not finalized");
 
-	mpi_datatype_size(MPI_INT, &size);
-	uassert(size == sizeof(int));
+	usize = mpi_datatype_size(MPI_INT);
+	uassert(usize == sizeof(int));
 	uprintf("Datatype size asserted");
 
-	mpi_datatype_size(MPI_DATATYPE_NULL, &size);
-	uassert(size == 0);
+	usize = mpi_datatype_size(MPI_DATATYPE_NULL);
+	uassert(usize == 0);
 	uprintf("NULL Datatype size asserted");
 
 	MPI_Comm_group(MPI_COMM_WORLD, &group);
@@ -130,6 +134,49 @@ int __main3(int argc, char *argv[])
 
 	uprintf("MPI_ERRHANDLER_NULL asserted");
 
+	uprintf("---------------------------------------------");
+
+	/* Communication test. */
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	outbuffer = rank;
+	inbuffer = (-1);
+
+	/* Pairs communication. */
+	if ((rank % 2) == 0)
+	{
+		remote = rank + 1;
+
+		uprintf("Rank %d preparing to send to rank %d", rank, remote);
+
+		MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD);
+
+		uprintf("Waiting for reply...");
+
+		MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+	else
+	{
+		remote = rank - 1;
+
+		uprintf("Rank %d waiting to receive from rank %d", rank, remote);
+
+		MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+		uprintf("Sending reply...");
+
+		MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD);
+	}
+
+	uprintf("Communication done!");
+
+	uassert(inbuffer == remote);
+
+	uprintf("Successful communication :)");
+
+	uprintf("---------------------------------------------");
+
+	/* Finalization. */
 	MPI_Finalize();
 
 	uprintf("Finalize Successful");
