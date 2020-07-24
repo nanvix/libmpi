@@ -126,6 +126,19 @@ static inline int mpi_group_rank(mpi_group_t * group)
 extern void mpi_group_set_rank(mpi_group_t * group, mpi_process_t * proc);
 
 /**
+ * @brief Gets the proc associated with rank @p rank.
+ *
+ * @param group Target group.
+ * @param rank  Target rank.
+ * @param proc  Pointer to hold the target process reference.
+ *
+ * @returns Upon successful completion, MPI_SUCCESS is returned and @p proc
+ * points to the desired proc. Uṕon failure, an MPI Error code is returned with
+ * @p proc pointing to NULL.
+ */
+extern int mpi_group_get_proc(mpi_group_t *group, int rank, mpi_process_t **proc);
+
+/**
  * @brief Increments the refcount of each process in @p group.
  *
  * @param group Group of processes to be manipulated.

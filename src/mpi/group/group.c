@@ -232,6 +232,29 @@ PUBLIC void mpi_group_set_rank(mpi_group_t * group, mpi_process_t * proc)
 }
 
 /**
+ * @todo Provide a detailed description.
+ */
+PUBLIC int mpi_group_get_proc(mpi_group_t *group, int rank, mpi_process_t **proc)
+{
+	/* Bad group. */
+	if (group == NULL)
+		return (MPI_ERR_GROUP);
+
+	/* Bad pointer. */
+	if (proc == NULL)
+		return (MPI_ERR_ARG);
+
+	/* Bad rank. */
+	if (!WITHIN(rank, 0, group->size))
+		return (MPI_ERR_RANK);
+
+	/* Gets the proc reference. */
+	*proc = group->procs[rank];
+
+	return (MPI_SUCCESS);
+}
+
+/**
  * @brief Initializes the groups submodule.
  *
  * @returns Upon successful completion, zero is returned. A
