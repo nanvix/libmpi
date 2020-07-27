@@ -12,16 +12,25 @@ lib/
 *.img
 *.o
 
+# Output Files
+nanvix-cluster*
+
+# Ctags
+tags
+
 # IDEs
+start.sh
 *.swp
 *.swo
 *.vscode/
-
-# Run logs
-*nanvix-cluster-*
+.clangd/
+*.json
 
 # KLib Headers
 include/nanvix/barelib.h
+include/posix/decl.h
+include/posix/stdarg.h
+include/posix/stddef.h
 
 # HAL Headers
 include/arch/
