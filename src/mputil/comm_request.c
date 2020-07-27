@@ -217,6 +217,8 @@ PUBLIC int comm_request_init(void)
 
 /**
  * @todo Implement this function.
+ *
+ * @todo This function must handle the restant requisitions before returning.
  */
 PUBLIC int comm_request_finalize(void)
 {
@@ -224,12 +226,12 @@ PUBLIC int comm_request_finalize(void)
 
 	current = rqueue.head;
 
-	/* Release requesitions. */
-	while (current)
-	{
-		resource_free(&pool_rnodes, (current - rnodes));
-		current = current->next;
-	}
+	/**
+	 * @todo We should handle all requisitions here leading them to a discard.
+	 * For now only returns an error sinalizing an inconsistent state.
+	 */
+	if (current)
+		return (-EAGAIN);
 
 	rqueue.head = NULL;
 	rqueue.tail = NULL;

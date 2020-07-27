@@ -24,6 +24,7 @@
 
 #include <nanvix/ulib.h>
 #include <nanvix/runtime/pm.h>
+#include <nanvix/sys/mailbox.h>
 #include <mputil/comm_context.h>
 #include <mpi/datatype.h>
 #include <mpi/mpi_errors.h>
@@ -202,6 +203,7 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, mpi_process_t *dest, 
 	int outbox;                  /**< Mailbox used to send request. */
 	int outportal;               /**< Portal used to send data.     */
 	int port;                    /**< Outportal allocated port.     */
+	int remote;
 	struct comm_message message; /**< Request message.              */
 	const char *name = process_name(dest);
 
@@ -228,7 +230,13 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, mpi_process_t *dest, 
 	if ((ret = nanvix_portal_write(outportal, buf, size)) < 0)
 		goto ret2;
 
-	/* Waits for recv ACK. */
+	/* Waits for recv ACK from the specified remote. */
+	if ((remote = nanvix_name_lookup(name)) < 0)
+		goto ret2;
+
+	if ((ret = nanvix_mailbox_set_remote(contexts[cid].inbox, remote, MAILBOX_ANY_PORT)) < 0)
+		goto ret2;
+
 	if ((ret = nanvix_mailbox_read(contexts[cid].inbox, (void *) &message, sizeof(struct comm_message))) < 0)
 		goto ret2;
 
