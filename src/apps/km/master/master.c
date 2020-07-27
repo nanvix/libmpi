@@ -106,6 +106,8 @@ static void send_work(void)
  * sync()                                                                     *
  *============================================================================*/
 
+static int _iterations = 0;
+
 static int sync(void)
 {
 	int again = 0;
@@ -137,12 +139,15 @@ static int sync(void)
 		vector_mult(CENTROID(i), 1.0/population[i]);
 	}
 
-	for (int i = 0; i < PROBLEM_NUM_WORKERS; i++)
+	if (++_iterations < 131)
 	{
-		if (has_changed[i])
+		for (int i = 0; i < PROBLEM_NUM_WORKERS; i++)
 		{
-			again = 1;
-			break;
+			if (has_changed[i])
+			{
+				again = 1;
+				break;
+			}
 		}
 	}
 

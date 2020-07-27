@@ -69,6 +69,8 @@ static void populate(void )
 			}
 		}
 
+		ppopulation[map[i]]++;
+
 		if (map[i] != init_map)
 			has_changed = 1;
 	}
