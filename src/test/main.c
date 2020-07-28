@@ -26,6 +26,7 @@
 #include <nanvix/ulib.h>
 #include <nanvix/config.h>
 #include <nanvix/limits.h>
+#include <mputil/proc.h>
 #include <mpi.h>
 
 #include <mpi/datatype.h>
@@ -97,7 +98,7 @@ int __main3(int argc, char *argv[])
 	uprintf("Comm rank asserted");
 
 	MPI_Group_size(group, &size);
-	uassert(size == NANVIX_PROC_MAX);
+	uassert(size == MPI_PROCESSES_NR);
 
 	uprintf("Group size asserted");
 
