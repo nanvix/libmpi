@@ -24,6 +24,7 @@
 
 #include <nanvix/ulib.h>
 #include <nanvix/runtime/pm.h>
+#include <nanvix/sys/mailbox.h>
 #include <mputil/comm_context.h>
 #include <mpi/datatype.h>
 #include <mpi/mpi_errors.h>
@@ -42,31 +43,6 @@
  * IT SHOULD NEVER CHANGE.
  */
 #define MPI_CONTEXTS_TOTAL (MPI_CONTEXTS_PREDEFINED + MPI_CONTEXTS_ALLOCATE_MAX)
-
-/**
- * @brief Struct that defines a message to establish communication.
- */
-struct comm_message
-{
-	uint16_t cid;    /**< Message context. */
-	uint16_t source; /**< Source cluster.  */
-
-	union
-	{
-		struct
-		{
-			uint16_t datatype;   /**< Datatype.     */
-			size_t size;         /**< Message size. */
-			int32_t tag;         /**< Message tag.  */
-			uint8_t portal_port; /**< Port Number.  */
-		} send;
-
-		struct
-		{
-			int errcode; /* Function return. */
-		} ret;
-	} msg;
-};
 
 /**
  * @brief Struct that defines a basic communication context.
@@ -92,11 +68,11 @@ PRIVATE void request_header_build(struct comm_message *m, uint16_t cid, uint16_t
 {
 	uassert(m != NULL);
 
-	m->source               = knode_get_num();
-	m->cid                  = cid;
+	m->req.src              = knode_get_num();
+	m->req.cid              = cid;
+	m->req.tag              = tag;
 	m->msg.send.datatype    = type;
 	m->msg.send.size        = size;
-	m->msg.send.tag         = tag;
 	m->msg.send.portal_port = portal_port;
 }
 
@@ -227,6 +203,7 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, mpi_process_t *dest, 
 	int outbox;                  /**< Mailbox used to send request. */
 	int outportal;               /**< Portal used to send data.     */
 	int port;                    /**< Outportal allocated port.     */
+	int remote;
 	struct comm_message message; /**< Request message.              */
 	const char *name = process_name(dest);
 
@@ -253,7 +230,13 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, mpi_process_t *dest, 
 	if ((ret = nanvix_portal_write(outportal, buf, size)) < 0)
 		goto ret2;
 
-	/* Waits for recv ACK. */
+	/* Waits for recv ACK from the specified remote. */
+	if ((remote = nanvix_name_lookup(name)) < 0)
+		goto ret2;
+
+	if ((ret = nanvix_mailbox_set_remote(contexts[cid].inbox, remote, MAILBOX_ANY_PORT)) < 0)
+		goto ret2;
+
 	if ((ret = nanvix_mailbox_read(contexts[cid].inbox, (void *) &message, sizeof(struct comm_message))) < 0)
 		goto ret2;
 
@@ -320,31 +303,36 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 	int outbox;                    /**< Output mailbox.       */
 	struct comm_message message;   /**< Received message.     */
 	struct comm_message reply;     /**< Requisition reply.    */
-	struct comm_request recvd_req; /**< Received requisition. */
+
+again:
+	comm_request_build(req->cid, req->src, req->tag, &message.req);
+
+	/* Search for a previous requisition. */
+	if (comm_request_search(&message))
+		goto found;
 
 	/* Waits for a send request. */
 	if (nanvix_mailbox_read(contexts[cid].inbox, &message, sizeof(struct comm_message)) < 0)
 		return (MPI_ERR_UNKNOWN);
 
-	/* Builds a requisition based on the received comm_message. */
-	comm_request_build(message.cid, message.source, message.msg.send.tag, &recvd_req);
-
 	/* Checks if the expected and received requests match. */
-	if (!comm_request_match(req, &recvd_req))
+	if (!comm_request_match(req, &message.req))
 	{
-		/**
-		 * @todo Here we need to include logic to register the requests in a requesition queue
-		 * and go back to wait for a new one to arrive.
-		 */
-		return (MPI_ERR_INTERN);
+		/* Error when enqueue requisition. */
+		if (comm_request_register(&message) != 0)
+			return (MPI_ERR_INTERN);
+
+		/* TODO: may another thread have enqueued another request? */
+		goto again;
 	}
 
+found:
 	/* Checks the other information that came in the message. */
 	if (!mpi_datatypes_match(datatype, message.msg.send.datatype))
 		return (MPI_ERR_TYPE);
 
 	/* Allows the remote to send data. */
-	if (nanvix_portal_allow2(contexts[cid].inportal, message.source, message.msg.send.portal_port) < 0)
+	if (nanvix_portal_allow2(contexts[cid].inportal, message.req.src, message.msg.send.portal_port) < 0)
 		return (MPI_ERR_INTERN);
 
 	overflow = 0;
@@ -375,8 +363,8 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 		ret = MPI_ERR_OTHER;
 
 	/* Builds the return message. */
-	reply.cid = cid;
-	reply.source = knode_get_num();
+	reply.req.cid         = cid;
+	reply.req.src         = knode_get_num();
 	reply.msg.ret.errcode = ret;
 
 	/* Sends an ACK message. */
@@ -408,3 +396,4 @@ PUBLIC int recv(int cid, void *buf, size_t size, mpi_process_t *src, int datatyp
 
 	return (ret);
 }
+
