@@ -38,7 +38,7 @@ distclean: distclean-mputil distclean-mpi distclean-test
 #===============================================================================
 
 # Builds The Test Driver
-all-test: all-mputil 
+all-test: all-mputil all-mpi
 	$(MAKE) -C test all
 
 # Cleans Test Driver Build Objects
