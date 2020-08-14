@@ -23,76 +23,57 @@
 #
 
 #===============================================================================
+# C Source Files
+#===============================================================================
+
+export SRC = $(wildcard $(CURDIR)/common/*.c)
+
+#===============================================================================
 
 # Builds Everything
-all: all-mputil all-mpi all-test all-apps
+all: all-km all-fn all-gf
 
 # Cleans Build Objects
-clean: clean-mputil clean-mpi clean-test clean-apps
+clean: clean-km clean-fn clean-gf
 
 # Cleans Everything
-distclean: distclean-mputil distclean-mpi distclean-test distclean-apps
+distclean: distclean-km distclean-fn distclean-gf
 
 #===============================================================================
-#
+# KM Benchmark
 #===============================================================================
 
-# Builds Applications
-all-apps: all-mputil all-mpi
-	$(MAKE) -C apps all
+all-km:
+	$(MAKE) -C km all
 
-# Cleans Build Objects
-clean-apps:
-	$(MAKE) -C apps clean
+clean-km:
+	$(MAKE) -C km clean
 
-# Cleans Applications
-distclean-apps:
-	$(MAKE) -C apps distclean
+distclean-km:
+	$(MAKE) -C km distclean
 
 #===============================================================================
-#
+# FN Benchmark
 #===============================================================================
 
-# Builds The Test Driver
-all-test: all-mputil all-mpi
-	$(MAKE) -C test all
+all-fn:
+	$(MAKE) -C fn all
 
-# Cleans Test Driver Build Objects
-clean-test:
-	$(MAKE) -C test clean
+clean-fn:
+	$(MAKE) -C fn clean
 
-# Cleans Test Driver Build
-distclean-test:
-	$(MAKE) -C test distclean
+distclean-fn:
+	$(MAKE) -C fn distclean
 
 #===============================================================================
-#
+# GF Benchmark
 #===============================================================================
 
-# Builds User Libraries
-all-mputil:
-	$(MAKE) -C mputil all
+all-gf:
+	$(MAKE) -C gf all
 
-# Cleans User Libraries Build Objects
-clean-mputil:
-	$(MAKE) -C mputil clean
+clean-gf:
+	$(MAKE) -C gf clean
 
-# Cleans User Libraries Build
-distclean-mputil:
-	$(MAKE) -C mputil distclean
-
-#===============================================================================
-#
-#===============================================================================
-
-# Builds User Libraries
-all-mpi:
-	$(MAKE) -C mpi all
-
-# Cleans User Libraries Build Objects
-clean-mpi:
-	$(MAKE) -C mpi clean
-
-# Cleans User Libraries Build
-distclean-mpi:
-	$(MAKE) -C mpi distclean
+distclean-gf:
+	$(MAKE) -C gf distclean
