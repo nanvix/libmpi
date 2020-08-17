@@ -25,45 +25,13 @@
 #===============================================================================
 
 # Builds Everything
-all: all-mputil all-mpi all-test all-apps
+all: all-mputil all-mpi all-test
 
 # Cleans Build Objects
-clean: clean-mputil clean-mpi clean-test clean-apps
+clean: clean-mputil clean-mpi clean-test
 
 # Cleans Everything
-distclean: distclean-mputil distclean-mpi distclean-test distclean-apps
-
-#===============================================================================
-#
-#===============================================================================
-
-# Builds Applications
-all-apps: all-mputil all-mpi
-	$(MAKE) -C apps all
-
-# Cleans Build Objects
-clean-apps:
-	$(MAKE) -C apps clean
-
-# Cleans Applications
-distclean-apps:
-	$(MAKE) -C apps distclean
-
-#===============================================================================
-#
-#===============================================================================
-
-# Builds The Test Driver
-all-test: all-mputil all-mpi
-	$(MAKE) -C test all
-
-# Cleans Test Driver Build Objects
-clean-test:
-	$(MAKE) -C test clean
-
-# Cleans Test Driver Build
-distclean-test:
-	$(MAKE) -C test distclean
+distclean: distclean-mputil distclean-mpi distclean-test
 
 #===============================================================================
 #
@@ -96,3 +64,19 @@ clean-mpi:
 # Cleans User Libraries Build
 distclean-mpi:
 	$(MAKE) -C mpi distclean
+
+#===============================================================================
+# Test
+#===============================================================================
+
+# Builds The Test Driver
+all-test: all-mputil all-mpi
+	$(MAKE) -C test all
+
+# Cleans Test Driver Build Objects
+clean-test:
+	$(MAKE) -C test clean
+
+# Cleans Test Driver Build
+distclean-test:
+	$(MAKE) -C test distclean
