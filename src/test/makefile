@@ -34,7 +34,7 @@ EXEC = nanvix-test.$(OBJ_SUFFIX)
 # C Source Files
 SRC = $(wildcard *.c)
 
-# Objects
+# Object Files
 OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 
 #===============================================================================
