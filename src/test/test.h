@@ -22,18 +22,36 @@
  * SOFTWARE.
  */
 
-#include <nanvix/ulib.h>
-#include "test.h"
+#ifndef _TEST_H_
+#define _TEST_H_
 
-int _argc = 0;
-char **_argv = NULL;
+	/**
+	 * @brief Number of iterations in stress tests.
+	 */
+	#define NITERATIONS 10
 
-int __main3(int argc, char *argv[])
-{
-	_argc = argc;
-	_argv = (char **) argv;
+	/**
+	 * @name Global parameters. 
+	 */
+	/**@{*/
+	extern int _argc;
+	extern char **_argv;
+	/**@}*/
 
-	test_mpi();
+	/**
+	 * @brief Unit test.
+	 */
+	struct test
+	{
+		void (*test_fn)(void); /**< Test function. */
+		const char *name;      /**< Test name.     */
+	};
 
-	return (0);
-}
+	/**
+	 * @name User-Level Testing Units
+	 */
+	/**@{*/
+	extern void test_mpi(void);
+	/**@}*/
+
+#endif /* _TEST_H_  */
