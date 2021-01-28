@@ -54,6 +54,11 @@ struct comm_message
 
 		struct
 		{
+			uint8_t mailbox_port; /**< Outbox port_nr. */
+		} confirm;
+
+		struct
+		{
 			int errcode; /* Function return. */
 		} ret;
 	} msg;

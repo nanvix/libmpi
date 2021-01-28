@@ -30,16 +30,9 @@
 #include <mputil/comm_request.h>
 
 /**
- * @brief Defines the first context ID available for MPI communicators.
- *
- * @note Constant defined in nanvix/limits/pm.h.
+ * @brief Defines the limit for the context ID.
  */
-#define MPI_CONTEXT_BASE NANVIX_GENERAL_PORTS_BASE
-
-/**
- * @brief Defines the max number of contexts to be allocated (excluding predefined).
- */
-#define MPI_CONTEXTS_ALLOCATE_MAX 0
+#define MPI_CONTEXT_LIMIT 32768
 
 /**
  * @brief Defines the available communication modes for pt2pt communication.
@@ -47,17 +40,6 @@
 #define COMM_READY_MODE    0
 #define COMM_BUFFERED_MODE 1
 #define COMM_SYNC_MODE     2
-
-/**
- * @brief Struct that defines a basic communication context.
- */
-struct mpi_comm_context
-{
-	int port;              /* Context port number. */
-	int inbox;             /* Inbox ID.            */
-	int inportal;          /* Inportal ID.         */
-	uint8_t is_collective; /* Collective context?  */
-};
 
 /**
  * @brief Allocates a context and propagates it through the other processes.
