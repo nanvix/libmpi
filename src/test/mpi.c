@@ -64,7 +64,7 @@ PRIVATE void test_mpi_before_init(void)
  */
 PRIVATE void test_mpi_init(void)
 {
-	uassert(MPI_Init(&_argc, &_argv) >= 0);
+	uassert(MPI_Init(&_argc, &_argv) == 0);
 }
 
 /**
@@ -168,6 +168,10 @@ PRIVATE void test_mpi_comm_pairs(void)
 #endif
 
 		uassert(MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
+
+#if TEST_VERBOSE
+		uprintf("Received!");
+#endif
 	}
 	else
 	{
@@ -184,6 +188,10 @@ PRIVATE void test_mpi_comm_pairs(void)
 #endif
 
 		uassert(MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
+
+#if TEST_VERBOSE
+		uprintf("Sent!");
+#endif
 	}
 
 	uassert(inbuffer == remote);
@@ -227,6 +235,10 @@ PRIVATE void test_mpi_comm_req_queue(void)
 
 			uassert(MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
 			uassert(inbuffer == remote);
+
+#if TEST_VERBOSE
+			uprintf("Received!");
+#endif
 		}
 
 		/* Reads even ranks. */
@@ -238,6 +250,10 @@ PRIVATE void test_mpi_comm_req_queue(void)
 
 			uassert(MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
 			uassert(inbuffer == remote);
+
+#if TEST_VERBOSE
+			uprintf("Received!");
+#endif
 		}
 	}
 	else
@@ -249,6 +265,10 @@ PRIVATE void test_mpi_comm_req_queue(void)
 #endif
 
 		uassert(MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
+
+#if TEST_VERBOSE
+		uprintf("Sent!");
+#endif
 	}
 
 #if TEST_VERBOSE
