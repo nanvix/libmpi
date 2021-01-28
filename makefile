@@ -49,6 +49,9 @@ export SUPPRESS_TESTS ?= no
 # Extras
 export ADDONS ?=
 
+# Uses LWMPI?
+export NANVIX_LWMPI ?= 1
+
 #===============================================================================
 # Directories
 #===============================================================================
@@ -104,6 +107,9 @@ export CFLAGS += $(ADDONS)
 
 # Enable sync and portal implementation that uses mailboxes
 export CFLAGS += -D__NANVIX_IKC_USES_ONLY_MAILBOX=0
+
+# Enable LWMPI environment setup
+export CFLAGS += -D__NANVIX_USES_LWMPI=$(NANVIX_LWMPI)
 
 # Additional C Flags
 include $(BUILDDIR)/makefile.cflags
