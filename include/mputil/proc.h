@@ -30,10 +30,17 @@
 #include <mputil/object.h>
 
 /**
+ * @brief Defines the number of active nodes.
+ */
+#ifndef MPI_NODES_NR
+#define MPI_NODES_NR NANVIX_PROC_MAX
+#endif
+
+/**
  * @brief Defines the number of active MPI_PROCESSES.
  */
 #ifndef MPI_PROCESSES_NR
-#define MPI_PROCESSES_NR NANVIX_PROC_MAX
+#define MPI_PROCESSES_NR (MPI_NODES_NR * 1)
 #endif
 
 /**
@@ -51,10 +58,13 @@
  */
 struct mpi_process_t
 {
-	object_t super; /* Base object class. */
+	object_t super; /* Base object class.     */
 
 	char name[NANVIX_PROC_NAME_MAX];
-	int pid;        /* Process ID.        */
+	int pid;        /* Process ID.            */
+	int tid;        /* Vinculated thread ID.  */
+	int inbox;
+	int inportal;
 };
 
 typedef struct mpi_process_t mpi_process_t;
@@ -75,6 +85,41 @@ static inline const char * process_name(mpi_process_t *proc)
 }
 
 /**
+ * @brief Gets reference pointer to the current MPI process.
+ *
+ * @returns Pointer to the local process descriptor.
+ */
+extern mpi_process_t * curr_mpi_proc(void);
+
+/**
+ * @brief Gets reference pointer to the current MPI process.
+ *
+ * @returns Pointer to the local process descriptor.
+ */
+static inline int curr_mpi_proc_inbox(void)
+{
+	return (curr_mpi_proc()->inbox);
+}
+
+/**
+ * @brief Gets reference pointer to the current MPI process.
+ *
+ * @returns Pointer to the local process descriptor.
+ */
+static inline int curr_mpi_proc_inportal(void)
+{
+	return (curr_mpi_proc()->inportal);
+}
+
+/**
+ * @brief Checks if the running MPI process is the master of the current cluster.
+ *
+ * @returns Returns ZERO if the running process is the master one. A NON-ZERO value
+ * is returned instead.
+ */
+extern int curr_proc_is_master(void);
+
+/**
  * @brief Allocates a new process for @p nodeid.
  *
  * @returns Upon successful completion, PID of the new
@@ -82,13 +127,6 @@ static inline const char * process_name(mpi_process_t *proc)
  * MPI error code is returned instead.
  */
 extern int process_allocate(void);
-
-/**
- * @brief Gets reference pointer to the local process.
- *
- * @returns Pointer to the local process descriptor.
- */
-extern mpi_process_t * process_local(void);
 
 /**
  * @brief Returns a processes list containing all active processes.
@@ -124,7 +162,7 @@ extern mpi_process_t ** mpi_proc_self_list(int *size);
 extern int mpi_proc_count(void);
 
 /**
- * @brief Waits on the MPI std_fence.
+ * @brief Waits on the MPI std_fence. (local processes)
  *
  * @returns Upon successful completion, zero is returned. A negative
  * error code is returned instead.
@@ -132,19 +170,27 @@ extern int mpi_proc_count(void);
 extern int mpi_std_fence(void);
 
 /**
- * @brief Initializes the processes submodule.
+ * @brief Waits on the MPI std_barrier. (local and remote processes)
+ *
+ * @returns Upon successful completion, zero is returned. A negative
+ * error code is returned instead.
+ */
+extern int mpi_std_barrier(void);
+
+/**
+ * @brief Initializes the process internal structures (thread specific).
  *
  * @returns Upon successful completion, zero is returned. A
  * negative MPI error code is returned instead.
  */
-extern int mpi_proc_init(void);
+extern int mpi_local_proc_init(void);
 
 /**
- * @brief Finalizes the processes submodule.
+ * @brief Finalizes the process internal structures (thread specific).
  *
  * @returns Upon successful completion, zero is returned. A
- * negative error code is returned instead.
+ * negative MPI error code is returned instead.
  */
-extern int mpi_proc_finalize(void);
+extern int mpi_local_proc_finalize(void);
 
 #endif /* NANVIX_PROCESS_H_ */

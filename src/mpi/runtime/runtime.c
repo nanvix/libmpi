@@ -51,6 +51,10 @@ PUBLIC int mpi_init(int argc, char **argv)
 	/* Locks the runtime to evaluate mpi_state. */
 	spinlock_lock(&_runtime_lock);
 
+		/* The master thread exclusively executes the initialization. */
+		if (!curr_proc_is_master())
+			goto slaves;
+
 		/* Checks if this function was already called. */
 		if (_mpi_state != MPI_STATE_NOT_INITIALIZED)
 		{
@@ -63,12 +67,16 @@ PUBLIC int mpi_init(int argc, char **argv)
 
 	spinlock_unlock(&_runtime_lock);
 
-	/* Initializes processes. */
-	if ((ret = mpi_proc_init()) != MPI_SUCCESS)
+	/* Initialize the thread local structures. */
+	if ((ret = mpi_local_proc_init()) != MPI_SUCCESS)
 	{
-		uprintf("ERROR!!! mpi_proc_init() failed");
-		goto end;
+		uprintf("ERROR!!! %s failed to initialize its local structures.",
+				process_name(curr_mpi_proc()));
+		return (ret);
 	}
+
+	/* First fence. */
+	uassert(mpi_std_fence() == 0);
 
 	/* Initialize MPI_Datatypes. */
 	if ((ret = mpi_datatype_init()) != MPI_SUCCESS)
@@ -130,13 +138,6 @@ PUBLIC int mpi_init(int argc, char **argv)
 
 	/* Initialize MPI_Attributes. */
 
-	/* Fence to ensure that everybody is at the same point in the initialization. */
-	if ((ret = mpi_std_fence()) != MPI_SUCCESS)
-	{
-		uprintf("ERROR!!! Could not ensure that all processes were initialized");
-		goto end;
-	}
-
 	/* Locks the runtime to set the mpi_state again. */
 	spinlock_lock(&_runtime_lock);
 
@@ -144,7 +145,31 @@ PUBLIC int mpi_init(int argc, char **argv)
 
 	spinlock_unlock(&_runtime_lock);
 
+	/* Barrier to ensure that everybody is at the same point in the initialization. */
+	if ((ret = mpi_std_barrier()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! Could not ensure that all processes were initialized");
+		goto end;
+	}
+
 end:
+	return (ret);
+
+slaves:
+	/* Initialize the thread local structures. */
+	if ((ret = mpi_local_proc_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! %s failed to initialize its local structures.",
+				process_name(curr_mpi_proc()));
+		return (ret);
+	}
+
+	/* First fence. */
+	uassert(mpi_std_fence() == 0);
+
+	/* Barrier. */
+	ret = mpi_std_barrier();
+
 	return (ret);
 }
 
@@ -159,6 +184,10 @@ PUBLIC int mpi_finalize(void)
 
 	/* Locks the runtime to assert the current mpi_state. */
 	spinlock_lock(&_runtime_lock);
+
+		/* The master thread exclusively executes the cleanup. */
+		if (!curr_proc_is_master())
+			goto slaves;
 
 		/* Checks if this function was already called. */
 		if (_mpi_state != MPI_STATE_INITIALIZED)
@@ -193,10 +222,18 @@ PUBLIC int mpi_finalize(void)
 	spinlock_unlock(&_runtime_lock);
 
 	/* Fence to ensure that everybody finalized communication. */
-	if ((ret = mpi_std_fence()) != MPI_SUCCESS)
+	if ((ret = mpi_std_barrier()) != MPI_SUCCESS)
 	{
 		uprintf("ERROR!!! Could not ensure that all processes were finalized");
 		goto end;
+	}
+
+	/* Finalize the thread local structures. */
+	if ((ret = mpi_local_proc_finalize()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! %s failed to finalize its local structures.",
+				process_name(curr_mpi_proc()));
+		return (ret);
 	}
 
 	/* Start to finalize what were initialized in mpi_init in the reverse order. */
@@ -236,13 +273,6 @@ PUBLIC int mpi_finalize(void)
 		goto end;
 	}
 
-	/* Finalize processes. */
-	if ((ret = mpi_proc_finalize()) != MPI_SUCCESS)
-	{
-		uprintf("ERROR!!! mpi_proc_finalize() failed");
-		goto end;
-	}
-
 	/* Finalize datatypes. */
 	if ((ret = mpi_datatype_finalize()) != MPI_SUCCESS)
 	{
@@ -250,13 +280,33 @@ PUBLIC int mpi_finalize(void)
 		goto end;
 	}
 
-end:
+	/* Last fence. */
+	uassert(mpi_std_fence() == 0);
+
 	/* Finalizes the mpi_state and returns. */
 	spinlock_lock(&_runtime_lock);
 
 		_mpi_state = MPI_STATE_FINALIZED;
 
 	spinlock_unlock(&_runtime_lock);
+
+end:
+	return (ret);
+
+slaves:
+	/* Barrier. */
+	ret = mpi_std_barrier();
+
+	/* Finalize the thread local structures. */
+	if ((ret = mpi_local_proc_finalize()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! %s failed to finalize its local structures.",
+				process_name(curr_mpi_proc()));
+		return (ret);
+	}
+
+	/* Last fence. */
+	uassert(mpi_std_fence() == 0);
 
 	return (ret);
 }

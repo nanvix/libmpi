@@ -188,7 +188,7 @@ PUBLIC int mpi_comm_init(void)
 		return (MPI_ERR_NO_MEM);
 
 	mpi_group_increment_proc_count(group);
-	mpi_group_set_rank(group, process_local());
+	mpi_group_set_rank(group, curr_mpi_proc());
 
 	_mpi_comm_world.group         = group;
 	_mpi_comm_world.my_rank       = group->my_rank;
@@ -205,7 +205,7 @@ PUBLIC int mpi_comm_init(void)
 		return (MPI_ERR_NO_MEM);
 
 	mpi_group_increment_proc_count(group);
-	mpi_group_set_rank(group, process_local());
+	mpi_group_set_rank(group, curr_mpi_proc());
 
 	_mpi_comm_self.group         = group;
 	_mpi_comm_self.my_rank       = group->my_rank;
