@@ -23,7 +23,7 @@
  */
 
 #include <mputil/proc.h>
-#include <mputil/comm_context.h>
+#include <mputil/communication.h>
 #include <mputil/comm_request.h>
 #include <mpi/mpiruntime.h>
 #include <mpi/errhandler.h>

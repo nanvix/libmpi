@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal.h>
 #include <nanvix/sys/noc.h>
 #include <nanvix/ulib.h>
 #include <nanvix/config.h>

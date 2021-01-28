@@ -22,12 +22,10 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hlib.h>
 #include <nanvix/ulib.h>
-#include <posix/errno.h>
 #include <mpi/communicator.h>
 #include <mpi/mpiruntime.h>
-#include <mputil/comm_context.h>
+#include <mputil/communication.h>
 
 PRIVATE void mpi_comm_construct(mpi_communicator_t *);
 PRIVATE void mpi_comm_destruct(mpi_communicator_t *);

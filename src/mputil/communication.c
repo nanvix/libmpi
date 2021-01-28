@@ -24,8 +24,7 @@
 
 #include <nanvix/ulib.h>
 #include <nanvix/runtime/pm.h>
-#include <nanvix/sys/mailbox.h>
-#include <mputil/comm_context.h>
+#include <mputil/communication.h>
 #include <mpi/datatype.h>
 #include <mpi/mpi_errors.h>
 
@@ -69,7 +68,7 @@ PRIVATE void request_header_build(struct comm_message *m, uint16_t cid, uint16_t
  *============================================================================*/
 
 /**
- * @see comm_context_allocate in comm_context.h.
+ * @see comm_context_allocate in communication.h.
  *
  * @todo Implement this function like described in the header file.
  */
@@ -79,7 +78,7 @@ PUBLIC int comm_context_allocate(void)
 }
 
 /**
- * @see comm_context_init in comm_context.h.
+ * @see comm_context_init in communication.h.
  */
 PUBLIC int comm_context_init(void)
 {
@@ -117,7 +116,7 @@ PUBLIC int comm_context_init(void)
 }
 
 /**
- * @see comm_context_finalize in comm_context.h.
+ * @see comm_context_finalize in communication.h.
  */
 PUBLIC int comm_context_finalize(void)
 {

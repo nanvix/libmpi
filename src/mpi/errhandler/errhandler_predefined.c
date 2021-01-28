@@ -22,9 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hlib.h>
 #include <nanvix/ulib.h>
-#include <posix/errno.h>
 #include <mpi/errhandler_predefined.h>
 #include <mpi/communicator.h>
 #include <mpi/mpiruntime.h>

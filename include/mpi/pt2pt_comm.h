@@ -31,7 +31,7 @@
  * @brief MPI Point-to-point communication modes.
  *
  * @note This enumeration should be in accord with the underlying constants
- * defined in mputil/comm_context.h whose defines the communication protocols
+ * defined in mputil/communication.h whose defines the communication protocols
  * available in the underlying levels.
  */
 typedef enum {

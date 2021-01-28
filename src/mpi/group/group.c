@@ -22,9 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hlib.h>
 #include <nanvix/ulib.h>
-#include <posix/errno.h>
 #include <mpi/group.h>
 
 PRIVATE void mpi_group_construct(mpi_group_t *);

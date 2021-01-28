@@ -25,7 +25,6 @@
 #ifndef NANVIX_MPI_COMMUNICATOR_H_
 #define NANVIX_MPI_COMMUNICATOR_H_
 
-#include <nanvix/hlib.h>
 #include <mputil/object.h>
 #include <mpi/group.h>
 #include <mpi/errhandler.h>

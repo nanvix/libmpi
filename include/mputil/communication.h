@@ -25,7 +25,6 @@
 #ifndef NANVIX_COMM_CONTEXT_H_
 #define NANVIX_COMM_CONTEXT_H_
 
-#include <nanvix/limits.h>
 #include <mputil/proc.h>
 #include <mputil/comm_request.h>
 

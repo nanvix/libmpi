@@ -23,7 +23,7 @@
  */
 
 #include <nanvix/runtime/pm.h>
-#include <mputil/comm_context.h>
+#include <mputil/communication.h>
 #include <mputil/comm_request.h>
 #include <mpi/pt2pt_comm.h>
 #include <mpi/communicator.h>
