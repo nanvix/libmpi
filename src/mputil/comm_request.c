@@ -114,8 +114,6 @@ PUBLIC int comm_request_match(struct comm_request *req1, struct comm_request *re
  * @returns Upon successful completion, zero is returned. Upon failure, a negative
  * error code is returned instead.
  *
- * @todo Implement this function.
- *
  * @note This function needs to copy the msg attributes in a safe structure, not only
  * storing its reference.
  */
