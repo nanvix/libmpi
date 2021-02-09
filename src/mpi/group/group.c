@@ -43,7 +43,6 @@ PRIVATE void mpi_group_construct(mpi_group_t * group)
 {
 	uassert(group != NULL);
 
-	group->my_rank = -1;
 	group->procs   = NULL;
 	group->size    = -1;
 	group->parent  = NULL;
@@ -171,7 +170,6 @@ PUBLIC mpi_group_t * mpi_group_allocate_w_procs(mpi_process_t ** procs, int grou
 			return (NULL);
 
 		/* Initializes the group attributes. */
-		new_group->my_rank = MPI_UNDEFINED;
 		new_group->procs   = procs;
 		new_group->size    = group_size;
 		new_group->parent  = NULL;
@@ -193,40 +191,43 @@ PUBLIC int mpi_group_free(mpi_group_t ** group)
 {
 	/* Bad group. */
 	if (*group == NULL)
-		return (MPI_ERR_GROUP);
+		return (-MPI_ERR_GROUP);
 
 	OBJ_RELEASE(*group);
 	*group = MPI_GROUP_NULL;
 
-	return (0);
+	return (MPI_SUCCESS);
 }
 
 /**
- * @brief Sets the local process rank inside the given group.
+ * @brief Gets the local process rank inside the given group.
  *
  * @param group Group descriptor.
- * @param proc  Local process descriptor.
+ * @param rank  Returned rank holder.
  *
- * @note A NULL pointer in @p proc will set the group rank to MPI_UNDEFINED.
+ * @returns Upon successful completion, MPI_SUCESS is returned.
+ * Upon failure, a negative error code is returned instead.
  */
-PUBLIC void mpi_group_set_rank(mpi_group_t * group, mpi_process_t * proc)
+PUBLIC int mpi_group_rank(mpi_group_t * group, int *rank)
 {
-	uassert(group != NULL);
+	mpi_process_t *curr_proc;
 
-	group->my_rank = MPI_UNDEFINED;
+	/* Gets the current process reference to be compared. */
+	curr_proc = curr_mpi_proc();
 
-	/* Loop over the group to assert that proc participates on it. */
-	if (proc != NULL)
+	/* Searches for the local process in the group's processes list. */
+	for (int i = 0; i < group->size; ++i)
 	{
-		for (int i = 0; i < group->size; ++i)
+		/* Found? */
+		if (group->procs[i] == curr_proc)
 		{
-			if (proc == group->procs[i])
-			{
-				group->my_rank = i;
-				break;
-			}
+			*rank = i;
+
+			return (MPI_SUCCESS);
 		}
 	}
+
+	return (MPI_ERR_UNKNOWN);
 }
 
 /**
@@ -262,12 +263,10 @@ PUBLIC int mpi_group_init(void)
 {
 	/* Initializes mpi_group_empty. */
 	OBJ_CONSTRUCT(&_mpi_group_empty, mpi_group_t);
-	_mpi_group_empty.my_rank = MPI_UNDEFINED;
 	_mpi_group_empty.size    = 0;
 
 	/* Initializes mpi_group_null. */
 	OBJ_CONSTRUCT(&_mpi_group_null, mpi_group_t);
-	_mpi_group_null.my_rank = MPI_PROC_NULL;
 	_mpi_group_null.size    = 0;
 
 	return (0);

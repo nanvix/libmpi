@@ -48,8 +48,6 @@ PUBLIC int MPI_Group_rank(MPI_Group group, int *rank)
 	/* Parameters checking. */
 	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
 
-	ret = MPI_SUCCESS;
-
 	/* Bad group. */
 	if (!mpi_group_is_valid(group))
 		ret = MPI_ERR_GROUP;
@@ -58,10 +56,11 @@ PUBLIC int MPI_Group_rank(MPI_Group group, int *rank)
 	if (rank == NULL)
 		ret = MPI_ERR_ARG;
 
+	/* Retrieves the current process rank from the given group. */
+	ret = mpi_group_rank((mpi_group_t *) group, rank);
+
 	/* Checks if there was an error and calls an error handler case positive. */
 	MPI_ERRHANDLER_CHECK(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
-
-	*rank = mpi_group_rank((mpi_group_t *) group);
 
 	return (MPI_SUCCESS);
 }
