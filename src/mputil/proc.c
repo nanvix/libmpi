@@ -33,6 +33,11 @@
 #include <nanvix/runtime/stdikc.h>
 
 /**
+ * @brief Enable/Disable debug mode.
+ */
+#define DEBUG 0
+
+/**
  * MPI Class declaration.
  */
 PRIVATE void process_construct(mpi_process_t *);
@@ -61,9 +66,9 @@ PRIVATE struct fence_t _std_fence;
  */
 PRIVATE pointer_array_t _processes_list;
 
-#define LOCAL_PROCESSES_MAX ((MPI_PROCESSES_NR / MPI_NODES_NR) +	        \
-			      ((MPI_PROCESSES_NR % MPI_NODES_NR == 0) ? 0 : 1)	\
-			    )
+#define LOCAL_PROCESSES_MAX ((MPI_PROCESSES_NR / MPI_NODES_NR) +                \
+                             ((MPI_PROCESSES_NR % MPI_NODES_NR == 0) ? 0 : 1)   \
+                            )
 
 /**
  * @brief Local processes reference.
@@ -286,12 +291,12 @@ end:
  * @brief Special struct to carry the traditional main function args for the
  * function wrapper in the pthreads way.
  */
-struct main_args
+PRIVATE struct
 {
 	int(*fn)(int, const char *[]);
 	int argc;
 	const char **argv;
-};
+} main_args;
 
 /**
  * @brief Wrapper for the user entry point function that followsthe traditional
@@ -299,11 +304,10 @@ struct main_args
  */
 PRIVATE void * _main3_wrapper(void *args)
 {
-	struct main_args *args_str;
+	UNUSED(args);
 
-	args_str = (struct main_args*) args;
-
-	args_str->fn(args_str->argc, args_str->argv);
+	/* Call main function. */
+	main_args.fn(main_args.argc, main_args.argv);
 
 	return (NULL);
 }
@@ -317,7 +321,6 @@ PUBLIC int __mpi_processes_init(int(*fn)(int, const char *[]), int argc, const c
 	int tid;             /* Created thread ID.      */
 	int first_pid;       /* First Local process ID. */
 	int local_processes; /* Test verification.      */
-	struct main_args args_str;
 
 	/* Initializes list of nodes for stdbarrier. */
 	for (int i = 0; i < MPI_NODES_NR; ++i)
@@ -371,9 +374,9 @@ PUBLIC int __mpi_processes_init(int(*fn)(int, const char *[]), int argc, const c
 		fence_init(&_std_fence, _local_processes_nr);
 
 		/* Initializes the parameters passing structure. */
-		args_str.fn = fn;
-		args_str.argc = argc;
-		args_str.argv = argv;
+		main_args.fn = fn;
+		main_args.argc = argc;
+		main_args.argv = argv;
 
 		/* Initializes the local processes list and create the threads that will run them. */
 		for (int i = 1, id = (first_pid + MPI_NODES_NR); id < _processes_nr; id += MPI_NODES_NR, ++i)
@@ -381,12 +384,8 @@ PUBLIC int __mpi_processes_init(int(*fn)(int, const char *[]), int argc, const c
 			_local_processes[i] = (mpi_process_t *) pointer_array_get_item(&_processes_list, id);
 			uassert(_local_processes[i] != NULL);
 
-			uprintf("CREATING THREAD %d", i);
-
 			/* Creates a thread to emulate an MPI process. */
-			uassert(kthread_create(&tid, &_main3_wrapper, (void *) &args_str) == 0);
-
-			uprintf("THREAD CREATED");
+			uassert(kthread_create(&tid, &_main3_wrapper, NULL) == 0);
 
 			_local_processes[i]->tid = tid;
 
@@ -420,12 +419,20 @@ PUBLIC int mpi_local_proc_init(void)
 	curr_proc = curr_mpi_proc();
 	curr_proc_name = process_name(curr_proc);
 
+#if DEBUG
+	uprintf("%s creating inbox", curr_proc_name);
+#endif /* DEBUG */
+
 	/* Initializes input mailbox. */
 	if ((mbxid = nanvix_mailbox_create(curr_proc_name)) < 0)
 	{
 		ret = mbxid;
 		goto err0;
 	}
+
+#if DEBUG
+	uprintf("%s creating inportal", curr_proc_name);
+#endif /* DEBUG */
 
 	/* Initializes input portal. */
 	if ((portalid = nanvix_portal_create(curr_proc_name)) < 0)
@@ -434,25 +441,27 @@ PUBLIC int mpi_local_proc_init(void)
 		goto err1;
 	}
 
+#if DEBUG
+	uprintf("%s registering local port %d", curr_proc_name, nanvix_mailbox_get_port(mbxid));
+#endif /* DEBUG */
+
 	/* Registers the local process in the system name service. */
 	if ((ret = nanvix_name_register(curr_proc_name, nanvix_mailbox_get_port(mbxid))) < 0)
-	//if ((ret = nanvix_name_register(curr_proc_name, stdinbox_get_port())) < 0)
 		goto err2;
 
 	/**
-	 * @brief Security checks!
-	 *
-	 * @todo Remove this verification when releasing.
-	 *
-	 * @note This may become a security check in initialization (third line).
+	 * @brief Security check.
 	 */
-	uassert(stdinbox_get_port() == nanvix_mailbox_get_port(mbxid));
-	uassert(stdinportal_get_port() == nanvix_portal_get_port(portalid));
 	uassert(nanvix_mailbox_get_port(mbxid) == nanvix_portal_get_port(portalid));
 
 	/* Updates curr_proc info. */
 	curr_proc->inbox = mbxid;
 	curr_proc->inportal = portalid;
+
+#if DEBUG
+	uprintf("%s inbox: %d", curr_proc_name, mbxid);
+	uprintf("%s inportal: %d", curr_proc_name, portalid);
+#endif /* DEBUG */
 
 	return (0);
 
@@ -531,14 +540,44 @@ PUBLIC int __mpi_processes_finalize(void)
  */
 PUBLIC int mpi_local_proc_finalize(void)
 {
+#if DEBUG
+	uprintf("Thread %d Unregistering", kthread_self());
+#endif /* DEBUG */
+
 	/* Unregisters the local process from the system name service. */
 	uassert(nanvix_name_unregister(process_name(curr_mpi_proc())) == 0);
+
+#if DEBUG
+	uprintf("Thread %d unlinking portal", kthread_self());
+#endif /* DEBUG */
 
 	/* Unlinks the inportal of the local process. */
 	uassert(nanvix_portal_unlink(curr_mpi_proc_inportal()) == 0);
 
+#if DEBUG
+	uprintf("Thread %d unlinking mailbox", kthread_self());
+#endif /* DEBUG */
+
 	/* Unlinks the inbox of the local process. */
 	uassert(nanvix_mailbox_unlink(curr_mpi_proc_inbox()) == 0);
 
+#if DEBUG
+	uprintf("Thread %d finalized", kthread_self());
+#endif /* DEBUG */
+
 	return (0);
+}
+
+/*============================================================================*
+ * mpi_local_procs_nr()                                                       *
+ *============================================================================*/
+
+ /**
+ * @brief Gets the number of locally present MPI processes.
+ *
+ * @returns The number of MPI processes that are locally present.
+ */
+PUBLIC int mpi_local_procs_nr(void)
+{
+	return (_local_processes_nr);
 }

@@ -40,7 +40,7 @@
  * @brief Defines the number of active MPI_PROCESSES.
  */
 #ifndef MPI_PROCESSES_NR
-#define MPI_PROCESSES_NR (MPI_NODES_NR * 1)
+#define MPI_PROCESSES_NR (MPI_NODES_NR * 2)
 #endif
 
 /**
@@ -192,5 +192,12 @@ extern int mpi_local_proc_init(void);
  * negative MPI error code is returned instead.
  */
 extern int mpi_local_proc_finalize(void);
+
+/**
+ * @brief Gets the number of locally present MPI processes.
+ *
+ * @returns The number of MPI processes that are locally present.
+ */
+extern int mpi_local_procs_nr(void);
 
 #endif /* NANVIX_PROCESS_H_ */
