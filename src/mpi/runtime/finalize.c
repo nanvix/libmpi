@@ -43,8 +43,14 @@ static const char FUNC_NAME[] = "MPI_Finalize";
  */
 PUBLIC int MPI_Finalize(void)
 {
-	/* Checks if MPI is in a valid state. */
-	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
+	UNUSED(FUNC_NAME);
 
+	/**
+	 * @brief This function is only a wrapper and goes directly to the underlying
+	 * implementation.
+	 *
+	 * @note All security checks relating to the runtime state are executed in
+	 * the underlying function, according to the process type (emulated or not).
+	 */
 	return (mpi_finalize());
 }

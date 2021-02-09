@@ -186,12 +186,12 @@ static void print_error_message(int *errcode, va_list arglist)
 	{
 		if (arg == NULL)
 		{
-			uprintf("ERROR!!! A function was called after MPI_Finalize() was invoked, what" \
+			uprintf("ERROR!!! A function was called after MPI_Finalize() was invoked, what " \
 			        "is not allowed by the MPI standard.");
 		}
 		else
 		{
-			uprintf("ERROR!!! %s() function called after MPI_Finalize() was invoked, what" \
+			uprintf("ERROR!!! %s() function called after MPI_Finalize() was invoked, what " \
 			        "is not allowed by the MPI standard.", arg);
 		}
 	}
@@ -203,7 +203,12 @@ static void print_error_message(int *errcode, va_list arglist)
 			uprintf("ERROR!!! %s", arg);
 
 		if (errcode != NULL)
-			uprintf("Error code: %d", *errcode);
+		{
+			if ((*errcode) < 0)
+				uprintf("Error code: -%d", -(*errcode));
+			else
+				uprintf("Error code: %d", *errcode);
+		}
 	}
 
 	va_end(arglist);

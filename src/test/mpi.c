@@ -42,10 +42,14 @@
  * API Tests                                                                  *
  *============================================================================*/
 
+/*============================================================================*
+ * API Test: Before Init Flags                                                *
+ *============================================================================*/
+
 /**
  * @brief API Test: Flags before initialization must be false 
  */
-PRIVATE void test_mpi_before_init(void)
+PRIVATE void test_mpi_before_init_flags(void)
 {
 	int flag;
 
@@ -58,6 +62,10 @@ PRIVATE void test_mpi_before_init(void)
 	uassert(!flag);
 }
 
+/*============================================================================*
+ * API Test: MPI_Init                                                         *
+ *============================================================================*/
+
 /**
  * @brief API Test: Initialization of MPI. 
  */
@@ -66,10 +74,14 @@ PRIVATE void test_mpi_init(void)
 	uassert(MPI_Init(&_argc, &_argv) == 0);
 }
 
+/*============================================================================*
+ * API Test: After Init Flags                                                 *
+ *============================================================================*/
+
 /**
  * @brief API Test: Flags after initalization must be true. 
  */
-PRIVATE void test_mpi_after_init(void)
+PRIVATE void test_mpi_after_init_flags(void)
 {
 	int flag;
 
@@ -82,6 +94,10 @@ PRIVATE void test_mpi_after_init(void)
 	uassert(!flag);
 }
 
+/*============================================================================*
+ * API Test: Datatypes Size                                                   *
+ *============================================================================*/
+
 /**
  * @brief API Test: Assert datatype sizes. 
  */
@@ -92,6 +108,10 @@ PRIVATE void test_mpi_datatype_size(void)
 	uassert(mpi_datatype_size(MPI_DATATYPE_NULL) == 0);
 }
 
+/*============================================================================*
+ * API Test: Group Functions                                                  *
+ *============================================================================*/
+
 /**
  * @brief API Test: Assert group functions. 
  */
@@ -99,10 +119,6 @@ PRIVATE void test_mpi_groups(void)
 {
 	int size, size2;
 	int rank, rank2;
-	int expected_rank;
-
-	expected_rank = (cluster_get_num() - SPAWNERS_NUM);
-
 	MPI_Group group;
 	MPI_Errhandler errhandler;
 
@@ -110,10 +126,9 @@ PRIVATE void test_mpi_groups(void)
 	uassert(group != MPI_GROUP_EMPTY);
 
 	MPI_Group_rank(group, &rank);
-	uassert(rank == expected_rank);
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank2);
-	uassert(rank2 == expected_rank);
+	uassert(rank2 == rank);
 
 	MPI_Group_size(group, &size);
 	uassert(size == MPI_PROCESSES_NR);
@@ -127,6 +142,9 @@ PRIVATE void test_mpi_groups(void)
 	MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhandler);
 	uassert(errhandler == MPI_ERRORS_ARE_FATAL);
 
+	/* Std fence to avoid errhandler changes to reflect in the other threads. */
+	uassert(mpi_std_fence() == 0);
+
 	MPI_Errhandler_free(&errhandler);
 	MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ABORT);
 	MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhandler);
@@ -135,6 +153,49 @@ PRIVATE void test_mpi_groups(void)
 	MPI_Errhandler_free(&errhandler);
 	uassert(errhandler == MPI_ERRHANDLER_NULL);
 }
+
+/*============================================================================*
+ * API Test: Distinct Processes Ranks                                         *
+ *============================================================================*/
+
+/**
+ * @brief Special structure to assert distinct ranks for distinct threads.
+ */
+PRIVATE int ranks_asserted[(MPI_PROCESSES_NR / MPI_NODES_NR) + 1] = {
+	[0 ... (MPI_PROCESSES_NR / MPI_NODES_NR)] = 0
+};
+
+/**
+ * @brief API Test: Distinct ranks for threads.
+ */
+PRIVATE void test_mpi_processes_ranks(void)
+{
+	int rank;
+	int base_rank;
+	int local_procs_nr;
+
+	base_rank = (cluster_get_num() - SPAWNERS_NUM);
+
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	/* Marks one initialization in ranks_asserted array. */
+	uassert((rank % MPI_NODES_NR) == (base_rank % MPI_NODES_NR));
+
+	ranks_asserted[(rank / MPI_NODES_NR)] = 1;
+
+	/* Fence to ensure that all threads are at the same point. */
+	uassert(mpi_std_fence() == 0);
+
+	local_procs_nr = mpi_local_procs_nr();
+
+	/* Verify if all local ranks completed this test. */
+	for (int i = 0; i < local_procs_nr; ++i)
+		uassert(ranks_asserted[i]);
+}
+
+/*============================================================================*
+ * API Test: Pairs Communication                                              *
+ *============================================================================*/
 
 /**
  * @brief API Test: Pair communication.
@@ -201,6 +262,10 @@ PRIVATE void test_mpi_comm_pairs(void)
 #endif
 }
 
+/*============================================================================*
+ * API Test: Requisitions Queue                                               *
+ *============================================================================*/
+
 /**
  * @brief API Test: Requisition queue.
  */
@@ -210,6 +275,9 @@ PRIVATE void test_mpi_comm_req_queue(void)
 	int size;
 	int remote;
 	int inbuffer, outbuffer;
+
+	uprintf("--------------------------");
+	uassert(mpi_std_fence() == 0);
 
 	/* Communication test. */
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -276,6 +344,10 @@ PRIVATE void test_mpi_comm_req_queue(void)
 #endif
 }
 
+/*============================================================================*
+ * API Test: MPI_Finalize                                                     *
+ *============================================================================*/
+
 /**
  * @brief API Test: Finalize of MPI. 
  */
@@ -284,10 +356,14 @@ PRIVATE void test_mpi_finalize(void)
 	uassert(MPI_Finalize() >= 0);
 }
 
+/*============================================================================*
+ * API Test: After Finalize Flags                                             *
+ *============================================================================*/
+
 /**
  * @brief API Test: Flags after finalize. 
  */
-PRIVATE void test_mpi_after_finalize(void)
+PRIVATE void test_mpi_after_finalize_flags(void)
 {
 	int flag;
 
@@ -308,16 +384,17 @@ PRIVATE void test_mpi_after_finalize(void)
  * @brief API Tests.
  */
 PRIVATE struct test test_api_mpi[] = {
-	{ test_mpi_before_init,    "[test][mpi][init]     Flags before MPI_Init       [passed]" },
-	{ test_mpi_init,           "[test][mpi][init]     Initialization              [passed]" },
-	{ test_mpi_after_init,     "[test][mpi][init]     Flags after MPI_Init        [passed]" },
-	{ test_mpi_datatype_size,  "[test][mpi][datatype] Datatype size               [passed]" },
-	{ test_mpi_groups,         "[test][mpi][group]    Group functions             [passed]" },
-	{ test_mpi_comm_pairs,     "[test][mpi][comm]     Communication between pairs [passed]" },
-	{ test_mpi_comm_req_queue, "[test][mpi][comm]     Requisition queue           [passed]" },
-	{ test_mpi_finalize,       "[test][mpi][finish]   Finalization                [passed]" },
-	{ test_mpi_after_finalize, "[test][mpi][finish]   Flags after MPI_Finalize    [passed]" },
-	{ NULL,                    NULL                                                         },
+	{ test_mpi_before_init_flags,    "[test][mpi][init]     Flags before MPI_Init    [passed]" },
+	{ test_mpi_init,                 "[test][mpi][init]     Initialization           [passed]" },
+	{ test_mpi_after_init_flags,     "[test][mpi][init]     Flags after MPI_Init     [passed]" },
+	{ test_mpi_datatype_size,        "[test][mpi][datatype] Datatype size            [passed]" },
+	{ test_mpi_groups,               "[test][mpi][group]    Group functions          [passed]" },
+	{ test_mpi_processes_ranks,      "[test][mpi][group]    Distinct Processes Ranks [passed]" },
+	{ test_mpi_comm_pairs,           "[test][mpi][comm]     Pairs communication      [passed]" },
+	{ test_mpi_comm_req_queue,       "[test][mpi][comm]     Requisition queue        [passed]" },
+	{ test_mpi_finalize,             "[test][mpi][finalize] Finalization             [passed]" },
+	{ test_mpi_after_finalize_flags, "[test][mpi][finalize] Flags after MPI_Finalize [passed]" },
+	{ NULL,                           NULL                                                     },
 };
 
 /**
@@ -334,19 +411,19 @@ PUBLIC void test_mpi(void)
 	nodenum = knode_get_num();
 
 	/* API Tests */
-	if (nodenum == PROCESSOR_NODENUM_LEADER)
+	if ((nodenum == PROCESSOR_NODENUM_LEADER) && curr_proc_is_master())
 		uprintf("--------------------------------------------------------------------------------");
 
 	for (int i = 0; test_api_mpi[i].test_fn != NULL; i++)
 	{
 		test_api_mpi[i].test_fn();
 
-		if (nodenum == PROCESSOR_NODENUM_LEADER)
+		if ((nodenum == PROCESSOR_NODENUM_LEADER) && curr_proc_is_master())
         	uprintf(test_api_mpi[i].name);
 	}
 
 	/* API Tests */
-	if (nodenum == PROCESSOR_NODENUM_LEADER)
+	if ((nodenum == PROCESSOR_NODENUM_LEADER) && curr_proc_is_master())
 		uprintf("--------------------------------------------------------------------------------");
 }
 
