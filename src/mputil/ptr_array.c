@@ -23,7 +23,6 @@
  */
 
 #include <nanvix/hlib.h>
-#include <nanvix/ulib.h>
 #include <posix/errno.h>
 #include <mputil/ptr_array.h>
 
@@ -44,7 +43,7 @@ PRIVATE void pointer_array_construct(pointer_array_t *array)
 {
 	uassert(array != NULL);
 
-	spinlock_init(&array->lock);
+	nanvix_mutex_init(&array->lock, NULL);
     array->lowest_free = 0;
     array->size = 0;
     array->max_size = 0;
@@ -233,7 +232,7 @@ PUBLIC int pointer_array_insert(pointer_array_t *array, void *ptr)
 	uassert(array->max_size > 0);
 
 	/* Locks the array. */
-	spinlock_lock(&array->lock);
+	nanvix_mutex_lock(&array->lock);
 
 		/* Verifies if there is a need for more space. */
 		if (array->size == array->max_size)
@@ -241,7 +240,7 @@ PUBLIC int pointer_array_insert(pointer_array_t *array, void *ptr)
 			/* Cannot allocate more space. */
 			if ((ret = grow_table(array, array->size + 1)) < 0)
 			{
-				spinlock_unlock(&array->lock);
+				nanvix_mutex_unlock(&array->lock);
 				return (ret);
 			}
 		}
@@ -256,7 +255,7 @@ PUBLIC int pointer_array_insert(pointer_array_t *array, void *ptr)
 		array->lowest_free = pointer_array_find_first_free(array, ret + 1);
 
 	/* Unlocks the array. */
-	spinlock_unlock(&array->lock);
+	nanvix_mutex_unlock(&array->lock);
 
 	return (ret);
 }
@@ -346,14 +345,14 @@ PUBLIC int pointer_array_set_item(pointer_array_t *array, int index, void *value
 		return (-EINVAL);
 
 	/* Locks the array. */
-	spinlock_lock(&array->lock);
+	nanvix_mutex_lock(&array->lock);
 
 		/* Need to grow table? */
 		if (index >= array->max_size)
 		{
 			if ((ret = grow_table(array, index)) < 0)
 			{
-				spinlock_unlock(&array->lock);
+				nanvix_mutex_unlock(&array->lock);
 				return (ret);
 			}
 		}
@@ -371,7 +370,7 @@ PUBLIC int pointer_array_set_item(pointer_array_t *array, int index, void *value
 			array->lowest_free = pointer_array_find_first_free(array, index + 1);
 
 	/* Unlocks the array. */
-	spinlock_unlock(&array->lock);
+	nanvix_mutex_unlock(&array->lock);
 
 	return (0);
 }
@@ -404,7 +403,7 @@ PUBLIC int pointer_array_pop(pointer_array_t *array, int index, void * ptr)
 		return (-EINVAL);
 
 	/* Locks the array. */
-	spinlock_lock(&array->lock);
+	nanvix_mutex_lock(&array->lock);
 
 		ptr = array->addr[index];
 
@@ -422,7 +421,7 @@ PUBLIC int pointer_array_pop(pointer_array_t *array, int index, void * ptr)
 
 unlock:
 	/*Unlocks the array. */
-	spinlock_unlock(&array->lock);
+	nanvix_mutex_unlock(&array->lock);
 
 	return (0);
 }
@@ -447,7 +446,7 @@ PUBLIC int pointer_array_remove(pointer_array_t *array, int index)
 		return (-EINVAL);
 
 	/* Locks the array. */
-	spinlock_lock(&array->lock);
+	nanvix_mutex_lock(&array->lock);
 
 		/* Addr is already free. */
 		if (array->addr[index] == NULL)
@@ -463,7 +462,7 @@ PUBLIC int pointer_array_remove(pointer_array_t *array, int index)
 
 unlock:
 	/* Unlocks the array. */
-	spinlock_unlock(&array->lock);
+	nanvix_mutex_unlock(&array->lock);
 
 	return (0);
 }
@@ -483,7 +482,7 @@ PUBLIC void pointer_array_clear(pointer_array_t *array)
 
 	limit = ((array->max_size - 1) / POINTER_ARRAY_BITMAP_SIZE);
 
-	spinlock_lock(&array->lock);
+	nanvix_mutex_lock(&array->lock);
 		array->lowest_free = 0;
 		array->size = 0;
 
@@ -493,5 +492,5 @@ PUBLIC void pointer_array_clear(pointer_array_t *array)
 		for (int i = 0; i <= limit; ++i)
 			array->used_bits[i] = 0;
 
-	spinlock_unlock(&array->lock);
+	nanvix_mutex_unlock(&array->lock);
 }

@@ -25,7 +25,7 @@
 #ifndef NANVIX_POINTER_ARRAY_H_
 #define NANVIX_POINTER_ARRAY_H_
 
-#include <nanvix/hal.h>
+#include <nanvix/sys/mutex.h>
 #include <mputil/object.h>
 
 /**
@@ -33,15 +33,15 @@
  */
 struct pointer_array_t
 {
-	object_t super;       /* Base object class.                */
+	object_t super;           /* Base object class.                */
 
-	spinlock_t lock;      /* Lock resource.                    */
-	int32_t lowest_free;  /* Lowest free index (optimization). */
-	int32_t size;         /* List size.                        */
-	int32_t max_size;     /* Array max size.                   */
-	int32_t block_size;   /* block size for each allocation    */
-	uint64_t *used_bits;  /* Free bits array (optimization).   */
-	void **addr;          /* Array of object pointers.         */
+	struct nanvix_mutex lock; /* Lock resource.                    */
+	int32_t lowest_free;      /* Lowest free index (optimization). */
+	int32_t size;             /* List size.                        */
+	int32_t max_size;         /* Array max size.                   */
+	int32_t block_size;       /* block size for each allocation    */
+	uint64_t *used_bits;      /* Free bits array (optimization).   */
+	void **addr;              /* Array of object pointers.         */
 };
 
 typedef struct pointer_array_t pointer_array_t;
@@ -114,9 +114,9 @@ static inline void * pointer_array_get_item(pointer_array_t *array, int index)
 	if (!WITHIN(index, 0, array->max_size))
 		return NULL;
 
-	spinlock_lock(&array->lock);
+	nanvix_mutex_lock(&array->lock);
 		p = array->addr[index];
-	spinlock_unlock(&array->lock);
+	nanvix_mutex_unlock(&array->lock);
 
 	return p;
 }
