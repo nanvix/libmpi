@@ -85,7 +85,7 @@ PUBLIC int comm_context_allocate(void)
  */
 PUBLIC int comm_context_init(void)
 {
-	uassert(nanvix_mutex_init(&_recv_lock) == 0);
+	uassert(nanvix_mutex_init(&_recv_lock, NULL) == 0);
 
 	return (0);
 }

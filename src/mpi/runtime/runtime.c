@@ -60,7 +60,7 @@ PUBLIC int mpi_init(int argc, char **argv)
 		goto slave;
 
 	/* Initializes runtime mutex. */
-	uassert(nanvix_mutex_init(&_runtime_lock) == 0);
+	uassert(nanvix_mutex_init(&_runtime_lock, NULL) == 0);
 
 	/* Locks the runtime to evaluate mpi_state. */
 	nanvix_mutex_lock(&_runtime_lock);
