@@ -224,6 +224,9 @@ PUBLIC int mpi_finalize(void)
 {
 	int ret;
 
+	/* Fence to ensure that all threads called finalize in the local cluster. */
+	uassert(mpi_std_fence() == 0);
+
 	/* The master thread exclusively executes the cleanup. */
 	if (!curr_proc_is_master())
 		goto slaves;
