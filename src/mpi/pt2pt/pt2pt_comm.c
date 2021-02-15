@@ -59,7 +59,7 @@ PUBLIC int mpi_send(const void *buf, int count, MPI_Datatype datatype, int dest,
 	/* Gets the datatype id. */
 	datatype_id = mpi_datatype_id(datatype);
 
-	ret = send(cid, buf, size, src, dest_proc, datatype_id, tag, mode);
+	ret = send(cid, buf, size, src, dest, dest_proc, datatype_id, tag, mode);
 
 end:
 	return (ret);
@@ -73,6 +73,7 @@ PUBLIC int mpi_recv(void *buf, int count, MPI_Datatype datatype, int source,
 {
 	int ret;
 	int cid;
+	int rank;
 	size_t size;
 	int datatype_id;
 	mpi_process_t *src_proc;
@@ -91,10 +92,15 @@ PUBLIC int mpi_recv(void *buf, int count, MPI_Datatype datatype, int source,
 	/* Gets the datatype id. */
 	datatype_id = mpi_datatype_id(datatype);
 
+	/* Gets the local process rank. */
+	if ((ret = mpi_comm_rank((mpi_communicator_t *) comm, &rank)) != MPI_SUCCESS)
+		return (ret);
+
 	/* Builds the recv request to be compared in the underlying function. */
-	request.cid = cid;
-	request.src = source;
-	request.tag = tag;
+	request.cid    = cid;
+	request.src    = source;
+	request.target = rank;
+	request.tag    = tag;
 
 	ret = recv(cid, buf, size, src_proc, datatype_id, &request);
 

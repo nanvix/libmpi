@@ -25,8 +25,10 @@
 #define __NEED_RESOURCE
 
 #include <nanvix/hal/resource.h>
+#include <nanvix/sys/mailbox.h>
+#include <nanvix/sys/mutex.h>
+#include <nanvix/sys/noc.h>
 #include <nanvix/ulib.h>
-#include <posix/errno.h>
 #include <mputil/comm_request.h>
 #include <mpi.h>
 
@@ -66,27 +68,74 @@ PRIVATE struct comm_request_queue
 } rqueue;
 
 /**
- * @todo Provide a detailed description.
+ * @brief Standard inbox to receive communication requests.
  */
-PUBLIC void comm_request_build(int cid, int src, int tag, struct comm_request *req)
-{
-	uassert(req != NULL);
-
-	req->cid = cid;
-	req->src = src;
-	req->tag = tag;
-}
+PRIVATE int _inbox = -1;
 
 /**
- * @todo Provide a detailed description.
+ * @brief Sinalizes that there is already a thread looking for new requests.
  */
-PUBLIC int comm_request_match(struct comm_request *req1, struct comm_request *req2)
+PRIVATE int _inbox_occupied = 0;
+
+/**
+ * @brief Request queue lock.
+ */
+PRIVATE struct nanvix_mutex _rqueue_lock;
+
+/*============================================================================*
+ * AUXILIAR FUNCTIONS                                                         *
+ *============================================================================*/
+
+/*============================================================================*
+ * comm_request_insert                                                        *
+ *============================================================================*/
+
+/**
+ * @brief Registers a requisition node in the requisitions queue.
+ *
+ * @param node Node to be registered.
+ */
+PRIVATE void comm_request_insert(struct comm_request_node *node)
+{
+	uassert(node != NULL);
+
+	/* Configure request node. */
+	node->next = NULL;
+
+	/* Has any node in the request queue?. */
+	if (rqueue.tail)
+		rqueue.tail->next = node;
+	else
+		rqueue.head = node;
+
+	/* Updates tail pointer. */
+	rqueue.tail = node;
+}
+
+/*============================================================================*
+ * comm_request_match                                                         *
+ *============================================================================*/
+
+/**
+ * @brief Compares if two communication requisitions are equal.
+ *
+ * @param req1 First requisition to be compared.
+ * @param req2 Second requisition.
+ *
+ * @returns Returns ZERO if the requisitions are different and a NON-ZERO value if
+ * they match correctly.
+ */
+PRIVATE int comm_request_match(struct comm_request *req1, struct comm_request *req2)
 {
 	uassert(req1 != NULL);
 	uassert(req2 != NULL);
 
 	/* Check cid. */
 	if (req1->cid != req2->cid)
+		return (0);
+
+	/* Check target. */
+	if (req1->target != req2->target)
 		return (0);
 
 	/* Check src. */
@@ -106,54 +155,121 @@ PUBLIC int comm_request_match(struct comm_request *req1, struct comm_request *re
 	return (1);
 }
 
+/*============================================================================*
+ * EXTERNAL FUNCTIONS                                                         *
+ *============================================================================*/
+
+/*============================================================================*
+ * comm_request_build                                                         *
+ *============================================================================*/
+
 /**
- * @brief Allocates a new request and registers it in the requisitions queue.
- *
- * @param msg Requisition to be registered.
- *
- * @returns Upon successful completion, zero is returned. Upon failure, a negative
- * error code is returned instead.
- *
- * @note This function needs to copy the msg attributes in a safe structure, not only
- * storing its reference.
+ * @todo Provide a detailed description.
  */
-PUBLIC int comm_request_register(struct comm_message *msg)
+PUBLIC void comm_request_build(int cid, int src, int target, int tag, struct comm_request *req)
+{
+	uassert(req != NULL);
+
+	req->cid    = cid;
+	req->src    = src;
+	req->target = target;
+	req->tag    = tag;
+}
+
+/*============================================================================*
+ * comm_request_receive                                                       *
+ *============================================================================*/
+
+/**
+ * @brief Receives a new communication request from the IKC facility.
+ *
+ * @param msg Message holder with a valid request information.
+ *
+ * @returns Upon successful completion, zero is returned with the received message
+ * copied into @p msg. Upon failure, a negative error code is returned instead.
+ */
+PUBLIC int comm_request_receive(struct comm_message *msg)
 {
 	int id;
-	struct comm_request_node *next;
+	int ret;
+	struct comm_request_node *node;
 
 	uassert(msg != NULL);
 
-	/* Allocate portal. */
+	ret = 0;
+
+search:
+	/* Have another thread received a new request? */
+	if (comm_request_search(msg))
+		goto end;
+
+	nanvix_mutex_lock(&_rqueue_lock);
+
+		if (_inbox_occupied)
+		{
+			nanvix_mutex_unlock(&_rqueue_lock);
+			goto search;
+		}
+
+		_inbox_occupied = 1;
+
+	nanvix_mutex_unlock(&_rqueue_lock);
+
+again:
+	/* Allocates a temporary node to receive the new request. */
 	if ((id = resource_alloc(&pool_rnodes)) < 0)
-		return (-EAGAIN);
+	{
+		ret = (-MPI_ERR_NO_MEM);
+		goto desoccupy;
+	}
 
-	/* Get the pointer to allocated node. */
-	next = &rnodes[id];
+	/* Gets the pointer to the allocated node. */
+	node = &rnodes[id];
 
-	/* Configure request node. */
-	next->next = NULL;
-	umemcpy(&next->msg, msg, sizeof(struct comm_message));
+	/* Waits for a send request. */
+	if (kmailbox_read(_inbox, &node->msg, sizeof(struct comm_message)) < 0)
+	{
+		ret = (-MPI_ERR_UNKNOWN);
+		goto desoccupy;
+	}
 
-	/* Has any node in the request queue?. */
-	if (rqueue.tail)
-		rqueue.tail->next = next;
-	else
-		rqueue.head = next;
+	/* Checks if the expected and received requests match. */
+	if (!comm_request_match(&msg->req, &node->msg.req))
+	{
+		/* Enqueue the received requisition. */
+		comm_request_insert(node);
+		goto again;
+	}
 
-	/* Updates tail pointer. */
-	rqueue.tail = next;
+desoccupy:
+	nanvix_mutex_lock(&_rqueue_lock);
 
-	return (0);
+		_inbox_occupied = 0;
+
+	nanvix_mutex_unlock(&_rqueue_lock);
+
+	/* Copies the received message to @p message and frees the allocated node. */
+	if (ret == 0)
+	{
+		umemcpy(msg, &node->msg, sizeof(struct comm_message));
+		resource_free(&pool_rnodes, id);
+	}
+
+end:
+	return (ret);
 }
+
+/*============================================================================*
+ * comm_request_search                                                        *
+ *============================================================================*/
 
 /**
  * @brief Search into Request Queue.
  *
  * @param msg Request reference with target information.
  *
- * @returns If a matched request is found, consume it and returns non-zero
- * value, zero, otherwise.
+ * @returns If a matched request is found, consume it and returns a non-zero
+ * value. Zero is returned instead.
  */
 PUBLIC int comm_request_search(struct comm_message *msg)
 {
@@ -202,6 +318,10 @@ PUBLIC int comm_request_search(struct comm_message *msg)
 	return (0);
 }
 
+/*============================================================================*
+ * comm_request_init                                                          *
+ *============================================================================*/
+
 /**
  * @todo Implement this function.
  */
@@ -210,8 +330,19 @@ PUBLIC int comm_request_init(void)
 	rqueue.head = NULL;
 	rqueue.tail = NULL;
 
+	/* Initialize default inbox for receiving communication requests. */
+	if ((_inbox = kmailbox_create(knode_get_num(), COMM_REQ_RECV_PORT)) < 0)
+		return (-MPI_ERR_INTERN);
+
+	/* Initialize requisition queue mutex. */
+	uassert(nanvix_mutex_init(&_rqueue_lock, NULL) == 0);
+
 	return (0);
 }
+
+/*============================================================================*
+ * comm_request_finalize                                                      *
+ *============================================================================*/
 
 /**
  * @todo Implement this function.
@@ -229,11 +360,14 @@ PUBLIC int comm_request_finalize(void)
 	 * For now only returns an error sinalizing an inconsistent state.
 	 */
 	if (current)
-		return (-EAGAIN);
+		return (-MPI_ERR_PENDING);
+
+	/* Unlinks the mailbox used to receive the communication requests. */
+	if (kmailbox_unlink(_inbox) < 0)
+		return (-MPI_ERR_UNKNOWN);
 
 	rqueue.head = NULL;
 	rqueue.tail = NULL;
 
 	return (0);
 }
-

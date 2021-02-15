@@ -53,12 +53,14 @@ PRIVATE struct nanvix_mutex _recv_lock;
 /**
  * @todo Provide a detailed description.
  */
-PRIVATE void request_header_build(struct comm_message *m, uint16_t cid, int src, uint16_t type,
-	                              int size, uint32_t tag, uint8_t portal_port)
+PRIVATE void request_header_build(struct comm_message *m, uint16_t cid, int src,
+	                              int target, uint16_t type, int size, uint32_t tag,
+	                              uint8_t portal_port)
 {
 	uassert(m != NULL);
 
 	m->req.src              = src;
+	m->req.target           = target;
 	m->req.cid              = cid;
 	m->req.tag              = tag;
 	m->msg.send.datatype    = type;
@@ -112,7 +114,8 @@ PUBLIC int comm_context_finalize(void)
  * @todo Implement this mode.
  */
 
-PRIVATE int __rsend(int cid, const void *buf, size_t size, int src, mpi_process_t *dest, int datatype, int tag)
+PRIVATE int __rsend(int cid, const void *buf, size_t size, int src, int dest,
+	                mpi_process_t *dest_proc, int datatype, int tag)
 {
 	UNUSED(cid);
 	UNUSED(buf);
@@ -120,6 +123,7 @@ PRIVATE int __rsend(int cid, const void *buf, size_t size, int src, mpi_process_
 	UNUSED(size);
 	UNUSED(src);
 	UNUSED(dest);
+	UNUSED(dest_proc);
 	UNUSED(tag);
 
 	return (MPI_ERR_UNSUPPORTED_OPERATION);
@@ -130,7 +134,8 @@ PRIVATE int __rsend(int cid, const void *buf, size_t size, int src, mpi_process_
  *
  * @todo Implement this mode.
  */
-PRIVATE int __bsend(int cid, const void *buf, size_t size, int src, mpi_process_t *dest, int datatype, int tag)
+PRIVATE int __bsend(int cid, const void *buf, size_t size, int src, int dest,
+	                mpi_process_t *dest_proc, int datatype, int tag)
 {
 	UNUSED(cid);
 	UNUSED(buf);
@@ -138,6 +143,7 @@ PRIVATE int __bsend(int cid, const void *buf, size_t size, int src, mpi_process_
 	UNUSED(size);
 	UNUSED(src);
 	UNUSED(dest);
+	UNUSED(dest_proc);
 	UNUSED(tag);
 
 	return (MPI_ERR_UNSUPPORTED_OPERATION);
@@ -146,28 +152,29 @@ PRIVATE int __bsend(int cid, const void *buf, size_t size, int src, mpi_process_
 /**
  * @todo Provide a detailed description.
  */
-PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, mpi_process_t *dest, int datatype, int tag)
+PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, int dest,
+	                mpi_process_t *dest_proc, int datatype, int tag)
 {
-	int ret;                     /**< Function return.                */
-	int inbox;                   /**< Process stdinbox.               */
-	int outbox;                  /**< Mailbox used to send request.   */
-	int outportal;               /**< Portal used to send data.       */
-	int outportal_port;          /**< Outportal associated port.      */
-	int remote;                  /**< Remote process nodenum.         */
-	int remote_port;             /**< Remote process allocated port.  */
-	int remote_outbox_port;
-	const char *remote_pname;    /**< Target process name.            */
-	struct comm_message message; /**< Request message.                */
-	struct comm_message confirm;
+	int ret;                     /**< Function return.              */
+	int inbox;                   /**< Process stdinbox.             */
+	int outbox;                  /**< Mailbox used to send request. */
+	int outportal;               /**< Portal used to send data.     */
+	int outportal_port;          /**< Outportal associated port.    */
+	int remote;                  /**< Remote process nodenum.       */
+	int remote_port;             /**< Remote process inbox port.    */
+	int remote_outbox_port;      /**< Remote process outbox port.   */
+	const char *remote_pname;    /**< Target process name.          */
+	struct comm_message message; /**< Request message.              */
+	struct comm_message confirm; /**< Confirmation message.         */
 
 	/* Initializes some basic variables. */
 	inbox = curr_mpi_proc_inbox();
-	remote_pname = process_name(dest);
+	remote_pname = process_name(dest_proc);
 
 	ret = (MPI_ERR_INTERN);
 
 #if DEBUG
-	uprintf("%s preparing to send to %s...", process_name(curr_mpi_proc()), process_name(dest));
+	uprintf("%s preparing to send to %s...", process_name(curr_mpi_proc()), process_name(dest_proc));
 #endif /* DEBUG */
 
 	/* Retrieves complete address from remote_pname. */
@@ -175,7 +182,7 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, mpi_process_
 		goto ret0;
 
 	/* Opens the outbox to send the request. */
-	if ((outbox = nanvix_mailbox_open(remote_pname, remote_port)) < 0)
+	if ((outbox = nanvix_mailbox_open(remote_pname, COMM_REQ_RECV_PORT)) < 0)
 		goto ret0;
 
 	/**
@@ -191,10 +198,10 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, mpi_process_
 	outportal_port = nanvix_portal_get_port(outportal);
 
 	/* Constructs the message header. */
-	request_header_build(&message, cid, src, datatype, size, tag, outportal_port);
+	request_header_build(&message, cid, src, dest, datatype, size, tag, outportal_port);
 
 #if DEBUG
-	uprintf("%s sending Request-to-send to %d:%d...", process_name(curr_mpi_proc()), remote, remote_port);
+	uprintf("%s sending Request-to-send to %d:%d...", process_name(curr_mpi_proc()), remote, COMM_REQ_RECV_PORT);
 #endif /* DEBUG */
 
 	/* Sends the request-to-send message to the receiver. */
@@ -254,7 +261,8 @@ ret0:
 	return (ret);
 }
 
-PUBLIC int send(int cid, const void *buf, size_t size, int src, mpi_process_t *dest, int datatype, int tag, int mode)
+PUBLIC int send(int cid, const void *buf, size_t size, int src, int dest,
+	            mpi_process_t *dest_proc, int datatype, int tag, int mode)
 {
 	int ret;
 
@@ -266,15 +274,15 @@ PUBLIC int send(int cid, const void *buf, size_t size, int src, mpi_process_t *d
 	switch (mode)
 	{
 		case COMM_READY_MODE:
-			ret = __rsend(cid, buf, size, src, dest, datatype, tag);
+			ret = __rsend(cid, buf, size, src, dest, dest_proc, datatype, tag);
 			break;
 
 		case COMM_BUFFERED_MODE:
-			ret = __bsend(cid, buf, size, src, dest, datatype, tag);
+			ret = __bsend(cid, buf, size, src, dest, dest_proc, datatype, tag);
 			break;
 
 		case COMM_SYNC_MODE:
-			ret = __ssend(cid, buf, size, src, dest, datatype, tag);
+			ret = __ssend(cid, buf, size, src, dest, dest_proc, datatype, tag);
 			break;
 
 		default:
@@ -289,20 +297,19 @@ PUBLIC int send(int cid, const void *buf, size_t size, int src, mpi_process_t *d
  * nanvix_recv()                                                              *
  *============================================================================*/
 
-PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int datatype, struct comm_request *req)
+PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int datatype,
+	               struct comm_request *req)
 {
-	int ret;
-	int inbox;                   /**< Process stdinbox.        */
+	int ret;                     /**< Function return.         */
 	int inportal;                /**< Process stdinportal.     */
-	int overflow;
+	int overflow;                /**< Overflow flag.           */
 	int outbox;                  /**< Output mailbox.          */
-	int remote_node;
-	int remote_port;
+	int remote_node;             /**< Remote node number.      */
+	int remote_port;             /**< Remote node port number. */
 	const char *remote_pname;    /**< Source process name.     */
 	struct comm_message message; /**< Received message.        */
 	struct comm_message reply;   /**< Requisition reply.       */
 
-	inbox = curr_mpi_proc_inbox();
 	inportal = curr_mpi_proc_inportal();
 	remote_pname = process_name(src);
 
@@ -310,47 +317,13 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 	uprintf("%s preparing to receive from %s...", process_name(curr_mpi_proc()), process_name(src));
 #endif /* DEBUG */
 
-again:
-	comm_request_build(req->cid, req->src, req->tag, &message.req);
+	/* Builds the request to be compared with an arriving one. */
+	comm_request_build(req->cid, req->src, req->target, req->tag, &message.req);
 
-	/* Search for a previous requisition. */
-	if (comm_request_search(&message))
-		goto found;
+	/* Receives a requisition from the interconnection. */
+	if ((ret = comm_request_receive(&message)) < 0)
+		return (ret);
 
-	uassert(nanvix_mutex_lock(&_recv_lock) == 0);
-
-#if DEBUG
-	uprintf("%s waiting for a new request to arrive in %d:%d...", process_name(curr_mpi_proc()), knode_get_num(), nanvix_mailbox_get_port(inbox));
-#endif /* DEBUG */
-
-		/* Waits for a send request. */
-		if (nanvix_mailbox_read(inbox, &message, sizeof(struct comm_message)) < 0)
-		{
-			uassert(nanvix_mutex_unlock(&_recv_lock) == 0);
-			return (MPI_ERR_UNKNOWN);
-		}
-
-#if DEBUG
-	uprintf("New request arrived!");
-#endif /* DEBUG */
-
-		/* Checks if the expected and received requests match. */
-		if (!comm_request_match(req, &message.req))
-		{
-			/* Error when enqueue requisition. */
-			if (comm_request_register(&message) != 0)
-			{
-				uassert(nanvix_mutex_unlock(&_recv_lock) == 0);
-				return (MPI_ERR_INTERN);
-			}
-
-			uassert(nanvix_mutex_unlock(&_recv_lock) == 0);
-
-			/* TODO: may another thread have enqueued another request? */
-			goto again;
-		}
-
-found:
 #if DEBUG
 	uprintf("%s found matching request from %s ...", process_name(curr_mpi_proc()), remote_pname);
 #endif /* DEBUG */
@@ -361,15 +334,15 @@ found:
 
 	ret = MPI_ERR_INTERN;
 
+	uassert(nanvix_mutex_lock(&_recv_lock) == 0);
+
 	/* Gets remote inbox port number. */
 	if ((remote_node = nanvix_name_address_lookup(remote_pname, &remote_port)) < 0)
-		return (ret);
-
-	uassert(remote_port >= 0);
+		goto end;
 
 	/* Opens a mailbox to send the ACK. */
 	if ((outbox = nanvix_mailbox_open(remote_pname, remote_port)) < 0)
-		return (ret);
+		goto end;
 
 	/* Prepares the confirmation message. */
 	reply.msg.confirm.mailbox_port = nanvix_mailbox_get_port(outbox);
@@ -442,7 +415,8 @@ end:
 	return (ret);
 }
 
-PUBLIC int recv(int cid, void *buf, size_t size, mpi_process_t *src, int datatype, struct comm_request *req)
+PUBLIC int recv(int cid, void *buf, size_t size, mpi_process_t *src, int datatype,
+	            struct comm_request *req)
 {
 	int ret;
 

@@ -74,11 +74,13 @@ extern int comm_context_finalize(void);
 /**
  * @todo Provide a detailed description.
  */
-extern int send(int cid, const void *buf, size_t size, int src, mpi_process_t *dest, int datatype, int tag, int mode);
+extern int send(int cid, const void *buf, size_t size, int src, int dest,
+	            mpi_process_t *dest_proc, int datatype, int tag, int mode);
 
 /**
  * @todo Provide a detailed description.
  */
-extern int recv(int cid, void *buf, size_t size, mpi_process_t *src, int datatype, struct comm_request *req);
+extern int recv(int cid, void *buf, size_t size, mpi_process_t *src, int datatype,
+	            struct comm_request *req);
 
 #endif /* NANVIX_COMM_CONTEXT_H_ */
