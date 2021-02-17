@@ -25,12 +25,22 @@
 #define __NEED_RESOURCE
 
 #include <nanvix/hal/resource.h>
+#include <nanvix/sys/fmutex.h>
 #include <nanvix/sys/mailbox.h>
 #include <nanvix/sys/mutex.h>
 #include <nanvix/sys/noc.h>
 #include <nanvix/ulib.h>
 #include <mputil/comm_request.h>
 #include <mpi.h>
+
+/**
+ * @brief Controls the debugging printfs.
+ */
+#define DEBUG 0
+
+#if DEBUG
+	#include <mputil/proc.h>
+#endif
 
 /**
  * @brief Maximum size of request queue.
@@ -78,6 +88,11 @@ PRIVATE int _inbox = -1;
 PRIVATE int _inbox_occupied = 0;
 
 /**
+ * @brief Fast mutex to control inbox usage.
+ */
+PRIVATE struct nanvix_fmutex _inbox_lock;
+
+/**
  * @brief Request queue lock.
  */
 PRIVATE struct nanvix_mutex _rqueue_lock;
@@ -102,14 +117,18 @@ PRIVATE void comm_request_insert(struct comm_request_node *node)
 	/* Configure request node. */
 	node->next = NULL;
 
-	/* Has any node in the request queue?. */
-	if (rqueue.tail)
-		rqueue.tail->next = node;
-	else
-		rqueue.head = node;
+	nanvix_mutex_lock(&_rqueue_lock);
 
-	/* Updates tail pointer. */
-	rqueue.tail = node;
+		/* Has any node in the request queue?. */
+		if (rqueue.tail)
+			rqueue.tail->next = node;
+		else
+			rqueue.head = node;
+
+		/* Updates tail pointer. */
+		rqueue.tail = node;
+
+	nanvix_mutex_unlock(&_rqueue_lock);
 }
 
 /*============================================================================*
@@ -199,23 +218,31 @@ PUBLIC int comm_request_receive(struct comm_message *msg)
 	ret = 0;
 
 search:
+#if DEBUG
+	uprintf("%s searching for an already received request...", process_name(curr_mpi_proc()));
+#endif /* DEBUG */
+
 	/* Have another thread received a new request? */
 	if (comm_request_search(msg))
 		goto end;
 
-	nanvix_mutex_lock(&_rqueue_lock);
+	nanvix_fmutex_lock(&_inbox_lock);
 
 		if (_inbox_occupied)
 		{
-			nanvix_mutex_unlock(&_rqueue_lock);
+			nanvix_fmutex_unlock(&_inbox_lock);
 			goto search;
 		}
 
 		_inbox_occupied = 1;
 
-	nanvix_mutex_unlock(&_rqueue_lock);
+	nanvix_fmutex_unlock(&_inbox_lock);
 
 again:
+#if DEBUG
+	uprintf("%s waiting for a new request...", process_name(curr_mpi_proc()));
+#endif /* DEBUG */
+
 	/* Allocates a temporary node to receive the new request. */
 	if ((id = resource_alloc(&pool_rnodes)) < 0)
 	{
@@ -242,11 +269,11 @@ again:
 	}
 
 desoccupy:
-	nanvix_mutex_lock(&_rqueue_lock);
+	nanvix_fmutex_lock(&_inbox_lock);
 
 		_inbox_occupied = 0;
 
-	nanvix_mutex_unlock(&_rqueue_lock);
+	nanvix_fmutex_unlock(&_inbox_lock);
 
 	/* Copies the received message to @p message and frees the allocated node. */
 	if (ret == 0)
@@ -278,42 +305,49 @@ PUBLIC int comm_request_search(struct comm_message *msg)
 
 	uassert(msg != NULL);
 
-	if (rqueue.head == NULL)
-		return (0);
+	nanvix_mutex_lock(&_rqueue_lock);
 
-	previous = NULL;
-	current  = rqueue.head;
+		if (rqueue.head == NULL)
+			goto unlock;
 
-	/* Search msg in the request queue. */
-	while (current && !comm_request_match(&msg->req, &current->msg.req))
-	{
-		previous = current;
-		current  = current->next;
-	}
+		previous = NULL;
+		current  = rqueue.head;
 
-	/* Found? (current != NULL) */
-	if (current)
-	{
-		/* Consumes the message. */
-		umemcpy(msg, &current->msg, sizeof(struct comm_message));
+		/* Search msg in the request queue. */
+		while (current && !comm_request_match(&msg->req, &current->msg.req))
+		{
+			previous = current;
+			current  = current->next;
+		}
 
-		/* Consumes head node. */ 
-		if (previous == NULL)
-			rqueue.head = current->next;
+		/* Found? (current != NULL) */
+		if (current)
+		{
+			/* Consumes the message. */
+			umemcpy(msg, &current->msg, sizeof(struct comm_message));
 
-		/* Consumes intermediare node (if current == tail then previous->next == NULL). */
-		else
-			previous->next = current->next;
-	
-		/* Consumes tail node (if head == tail => previous == NULL). */
-		if (current == rqueue.tail)
-			rqueue.tail = previous;
+			/* Consumes head node. */
+			if (previous == NULL)
+				rqueue.head = current->next;
 
-		/* Releases resource. */
-		resource_free(&pool_rnodes, (current - rnodes));
+			/* Consumes intermediare node (if current == tail then previous->next == NULL). */
+			else
+				previous->next = current->next;
 
-		return (1);
-	}
+			/* Consumes tail node (if head == tail => previous == NULL). */
+			if (current == rqueue.tail)
+				rqueue.tail = previous;
+
+			nanvix_mutex_unlock(&_rqueue_lock);
+
+			/* Releases resource. */
+			resource_free(&pool_rnodes, (current - rnodes));
+
+			return (1);
+		}
+
+unlock:
+	nanvix_mutex_unlock(&_rqueue_lock);
 
 	return (0);
 }
@@ -336,6 +370,9 @@ PUBLIC int comm_request_init(void)
 
 	/* Initialize requisition queue mutex. */
 	uassert(nanvix_mutex_init(&_rqueue_lock, NULL) == 0);
+
+	/* Initialize inbox lock. */
+	uassert(nanvix_fmutex_init(&_inbox_lock) == 0);
 
 	return (0);
 }
