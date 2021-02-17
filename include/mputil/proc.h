@@ -43,6 +43,10 @@
 #define MPI_PROCESSES_NR (MPI_NODES_NR * 2)
 #endif
 
+#define MPI_PROCS_PER_CLUSTER_MAX ((MPI_PROCESSES_NR / MPI_NODES_NR) +                \
+                                   ((MPI_PROCESSES_NR % MPI_NODES_NR == 0) ? 0 : 1)   \
+                                  )
+
 /**
  * @brief Base compensation for clusters know their local mpi_id.
  */
@@ -58,11 +62,11 @@
  */
 struct mpi_process_t
 {
-	object_t super; /* Base object class.     */
+	object_t super; /* Base object class.    */
 
 	char name[NANVIX_PROC_NAME_MAX];
-	int pid;        /* Process ID.            */
-	int tid;        /* Vinculated thread ID.  */
+	int pid;        /* Process ID.           */
+	int tid;        /* Vinculated thread ID. */
 	int inbox;
 	int inportal;
 };
@@ -90,6 +94,14 @@ static inline const char * process_name(mpi_process_t *proc)
  * @returns Pointer to the local process descriptor.
  */
 extern mpi_process_t * curr_mpi_proc(void);
+
+/**
+ * @brief Gets the current process index in the local cluster.
+ *
+ * @returns The index of the current MPI Process in the local processes
+ * table.
+ */
+extern int curr_mpi_proc_index(void);
 
 /**
  * @brief Gets reference pointer to the current MPI process.

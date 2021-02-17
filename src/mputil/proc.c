@@ -66,15 +66,11 @@ PRIVATE struct fence_t _std_fence;
  */
 PRIVATE pointer_array_t _processes_list;
 
-#define LOCAL_PROCESSES_MAX ((MPI_PROCESSES_NR / MPI_NODES_NR) +                \
-                             ((MPI_PROCESSES_NR % MPI_NODES_NR == 0) ? 0 : 1)   \
-                            )
-
 /**
  * @brief Local processes reference.
  */
-PRIVATE mpi_process_t *_local_processes[LOCAL_PROCESSES_MAX] = {
-	[0 ... LOCAL_PROCESSES_MAX - 1] = NULL
+PRIVATE mpi_process_t *_local_processes[MPI_PROCS_PER_CLUSTER_MAX] = {
+	[0 ... MPI_PROCS_PER_CLUSTER_MAX - 1] = NULL
 };
 
 /**
@@ -167,6 +163,30 @@ PUBLIC mpi_process_t * curr_mpi_proc(void)
 PUBLIC int curr_proc_is_master(void)
 {
 	return ((_local_processes_nr == 1) || (kthread_self() == _master_tid));
+}
+
+/**
+ * @see curr_mpi_proc_index in proc.h.
+ */
+PUBLIC int curr_mpi_proc_index(void)
+{
+	int tid; /* Current thread ID. */
+
+	/* Checks if there is only a single process in the current cluster. */
+	if (_local_processes_nr == 1)
+		return (0);
+
+	tid = kthread_self();
+
+	/* Gets the process reference associated with the current TID. */
+	for (int i = 0; i < _local_processes_nr; ++i)
+	{
+		if (_local_processes[i]->tid == tid)
+			return (i);
+	}
+
+	/* Should never get here. */
+	UNREACHABLE();
 }
 
 /*============================================================================*
