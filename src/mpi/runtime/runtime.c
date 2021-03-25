@@ -59,6 +59,10 @@ PUBLIC int mpi_init(int argc, char **argv)
 	if (!curr_proc_is_master())
 		goto slave;
 
+#if DEBUG
+	uprintf("%s as master of the cluster...", process_name(curr_mpi_proc()));
+#endif /* DEBUG */
+
 	/* Initializes runtime mutex. */
 	uassert(nanvix_mutex_init(&_runtime_lock, NULL) == 0);
 
@@ -182,16 +186,16 @@ end:
 	return (ret);
 
 slave:
+	/* First fence to ensure that local processes were correctly initialized. */
+	uassert(mpi_std_fence() == 0);
+
+#if DEBUG
+	uprintf("%s preparing to initialize local structures...", process_name(curr_mpi_proc()));
+#endif /* DEBUG */
+
 	/* Initialize std structures for spawned threads. */
 	uassert(__stdmailbox_setup() == 0);
 	uassert(__stdportal_setup() == 0);
-
-#if DEBUG
-	uprintf("%s waiting in first fence...", process_name(curr_mpi_proc()));
-#endif /* DEBUG */
-
-	/* First fence to ensure that local processes were correctly initialized. */
-	uassert(mpi_std_fence() == 0);
 
 #if DEBUG
 	uprintf("%s initializing local structures...", process_name(curr_mpi_proc()));
