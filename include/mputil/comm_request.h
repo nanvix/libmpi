@@ -25,10 +25,12 @@
 #ifndef NANVIX_COMM_REQUEST_H_
 #define NANVIX_COMM_REQUEST_H_
 
+#include <nanvix/kernel/mailbox.h>
+
 /**
  * @brief Predefined port number that is used to receive communication requests.
  */
-#define COMM_REQ_RECV_PORT 15
+#define COMM_REQ_RECV_PORT (KMAILBOX_PORT_NR - 1)
 
 /**
  * @brief Struct that defines a basic communication request.
@@ -53,9 +55,11 @@ struct comm_message
 	{
 		struct
 		{
-			uint16_t datatype;   /**< Datatype.     */
-			size_t size;         /**< Message size. */
-			uint8_t portal_port; /**< Port Number.  */
+			uint16_t datatype;   /**< Datatype.          */
+			size_t size;         /**< Message size.      */
+			uint8_t portal_port; /**< Port Number.       */
+			uint8_t inbox_port;  /**< Inbox Port Number. */
+			uint8_t nodenum;     /**< Node Number.       */
 		} send;
 
 		struct

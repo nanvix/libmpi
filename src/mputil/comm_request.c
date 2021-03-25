@@ -45,7 +45,7 @@
 /**
  * @brief Maximum size of request queue.
  */
-#define RQUEUE_MAX_SIZE 32
+#define RQUEUE_MAX_SIZE 256
 
 /**
  * @brief Request queue node structure.
@@ -253,12 +253,20 @@ again:
 	/* Gets the pointer to the allocated node. */
 	node = &rnodes[id];
 
+#if DEBUG
+	uprintf("%s waiting in its inbox...", process_name(curr_mpi_proc()));
+#endif /* DEBUG */
+
 	/* Waits for a send request. */
 	if (kmailbox_read(_inbox, &node->msg, sizeof(struct comm_message)) < 0)
 	{
 		ret = (-MPI_ERR_UNKNOWN);
 		goto desoccupy;
 	}
+
+#if DEBUG
+	uprintf("Request arrived from process %d to process %d", node->msg.req.src, node->msg.req.target);
+#endif /* DEBUG */
 
 	/* Checks if the expected and received requests match. */
 	if (!comm_request_match(&msg->req, &node->msg.req))
