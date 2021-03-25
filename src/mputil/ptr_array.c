@@ -26,8 +26,6 @@
 #include <posix/errno.h>
 #include <mputil/ptr_array.h>
 
-#define POINTER_ARRAY_BITMAP_SIZE (sizeof(uint64_t) * 8)
-
 PRIVATE void pointer_array_construct(pointer_array_t *);
 PRIVATE void pointer_array_destruct(pointer_array_t *);
 PRIVATE int grow_table(pointer_array_t *array, int at_least);
@@ -44,11 +42,10 @@ PRIVATE void pointer_array_construct(pointer_array_t *array)
 	uassert(array != NULL);
 
 	nanvix_mutex_init(&array->lock, NULL);
-    array->lowest_free = 0;
-    array->size = 0;
-    array->max_size = 0;
-    array->used_bits = NULL;
-    array->addr = NULL;
+	array->lowest_free = 0;
+	array->size = 0;
+	array->max_size = 0;
+	array->addr = NULL;
 }
 
 /**
@@ -56,41 +53,16 @@ PRIVATE void pointer_array_construct(pointer_array_t *array)
  */
 PRIVATE void pointer_array_destruct(pointer_array_t *array)
 {
-    if(array->used_bits != NULL) {
-        ufree(array->used_bits);
-        array->used_bits = NULL;
-    }
+	if(array->addr != NULL) {
+		ufree(array->addr);
+		array->addr = NULL;
+	}
 
-    if(array->addr != NULL) {
-        ufree(array->addr);
-        array->addr = NULL;
-    }
-
-    array->size = 0;
+	array->size = 0;
 }
 
 /**
- * @brief Sets a bit to ONE.
- *
- * @param bits  Pointer to the bits array.
- * @param index Index of the bit to be set.
- */
-#define SET_BIT(bits, index)                           \
-    (bits[(int)(index/POINTER_ARRAY_BITMAP_SIZE)]) |= \
-    (1 << index % POINTER_ARRAY_BITMAP_SIZE)
-
-/**
- * @brief Sets a bit to ZERO.
- *
- * @param bits  Pointer to the bits variable.
- * @param index Index of the bit to be unset.
- */
-#define UNSET_BIT(bits, index)                         \
-    (bits[(int)(index/POINTER_ARRAY_BITMAP_SIZE)]) &= \
-    ~(1 << index % POINTER_ARRAY_BITMAP_SIZE)
-
-/**
- * @brief Finds the first zero in an uint64_t.
+ * @brief Finds the first zero in an uint32_t.
  *
  * @param bits  Pointer to bits array.
  * @param start First index of search (included).
@@ -99,53 +71,16 @@ PRIVATE void pointer_array_destruct(pointer_array_t *array)
  */
 static inline int pointer_array_find_first_free(pointer_array_t * array, int start)
 {
-	int index;
-	int limit;
-	int pos;
-	uint64_t check;
-
 	if (array->size == array->max_size)
 		return (array->size);
 
-	index = (start / POINTER_ARRAY_BITMAP_SIZE);
-	limit = ((array->max_size - 1) / POINTER_ARRAY_BITMAP_SIZE);
-
-	for (; (array->used_bits[index] == 0xFFFFFFFFFFFFFFFFu) && (index <= limit); ++index);
-
-	check = array->used_bits[index];
-	pos = 0;
-
-	if (0x00000000FFFFFFFFu == (check & 0x00000000FFFFFFFFu))
+	for (int i = start; i < array->max_size; ++i)
 	{
-		check >>= 32; pos += 32;
+		if (array->addr[i] == NULL)
+			return (i);
 	}
 
-	if (0x000000000000FFFFu == (check & 0x000000000000FFFFu))
-	{
-		check >>= 16; pos += 16;
-	}
-
-	if (0x00000000000000FFu == (check & 0x00000000000000FFu))
-	{
-		check >>= 8; pos += 8;
-	}
-
-	if (0x000000000000000Fu == (check & 0x000000000000000Fu))
-	{
-		check >>= 4; pos += 4;
-	}
-
-	if (0x0000000000000003u == (check & 0x0000000000000003u))
-	{
-		check >>= 2; pos += 2;
-	}
-
-	if (0x0000000000000001u == (check & 0x0000000000000001u))
-	{
-		pos += 1;
-	}
-
-	return ((index * 8 * sizeof(uint64_t)) + pos);
+	return (array->max_size);
 }
 
 /**
@@ -178,22 +113,6 @@ PUBLIC int pointer_array_init(pointer_array_t* array,
 	array->addr = (void **) umalloc(initial_allocation * sizeof(void *));
 	if (array->addr == NULL)
 		return (-ENOMEM);
-
-	/* Allocates the used_bits variables. */
-	array->used_bits = (uint64_t *) ucalloc(
-										TRUNCATE(
-											initial_allocation,
-											POINTER_ARRAY_BITMAP_SIZE
-										) / POINTER_ARRAY_BITMAP_SIZE,
-										sizeof(uint64_t)
-									);
-
-	if (array->used_bits == NULL)
-	{
-		ufree(array->addr);
-		array->addr = NULL;
-		return (-ENOMEM);
-	}
 
 	for (int i = 0; i < initial_allocation; ++i)
 		array->addr[i] = NULL;
@@ -250,7 +169,6 @@ PUBLIC int pointer_array_insert(pointer_array_t *array, void *ptr)
 		uassert(array->addr[ret] == NULL);
 		array->addr[ret] = ptr;
 		array->size++;
-		SET_BIT(array->used_bits, ret);
 	
 		array->lowest_free = pointer_array_find_first_free(array, ret + 1);
 
@@ -272,8 +190,6 @@ PRIVATE int grow_table(pointer_array_t *array, int at_least)
 {
 	int grow;
 	int new_size;
-	int old_int;
-	int new_int;
 	void *p;
 
 	uassert(array != NULL);
@@ -295,22 +211,6 @@ PRIVATE int grow_table(pointer_array_t *array, int at_least)
 
 	for (int i = array->max_size; i < new_size; ++i)
 		array->addr[i] = NULL;
-
-	/* Verifies the necessity of reallocating the used_bits array. */
-	new_int = TRUNCATE(new_size, POINTER_ARRAY_BITMAP_SIZE) / POINTER_ARRAY_BITMAP_SIZE;
-	old_int = TRUNCATE(array->max_size, POINTER_ARRAY_BITMAP_SIZE) / POINTER_ARRAY_BITMAP_SIZE;
-	
-	if (new_int != old_int)
-	{
-		p = (uint64_t *) urealloc(array->used_bits, new_int * sizeof(uint64_t));
-		if (p == NULL)
-			return (-ENOMEM);
-
-		array->used_bits = (uint64_t *) p;
-
-		for (int i = old_int; i < new_int; ++i)
-			array->used_bits[i] = 0;
-	}
 
 	/* Updates array size. */
 	array->max_size = new_size;
@@ -358,10 +258,7 @@ PUBLIC int pointer_array_set_item(pointer_array_t *array, int index, void *value
 		}
 
 		if (array->addr[index] == NULL)
-		{
 			array->size++;
-			SET_BIT(array->used_bits, index);
-		}
 
 		array->addr[index] = value;
 
@@ -414,7 +311,6 @@ PUBLIC int pointer_array_pop(pointer_array_t *array, int index, void * ptr)
 		/* Releases the addr. */
 		array->addr[index] = NULL;
 		array->size--;
-		UNSET_BIT(array->used_bits, index);
 
 		if (index < array->lowest_free)
 			array->lowest_free = index;
@@ -455,7 +351,6 @@ PUBLIC int pointer_array_remove(pointer_array_t *array, int index)
 		/* Releases the addr. */
 		array->addr[index] = NULL;
 		array->size--;
-		UNSET_BIT(array->used_bits, index);
 
 		if (index < array->lowest_free)
 			array->lowest_free = index;
@@ -474,13 +369,9 @@ unlock:
  */
 PUBLIC void pointer_array_clear(pointer_array_t *array)
 {
-	int limit;
-
 	/* Checks if array already empty. */
 	if(array->size == 0)
 		return;
-
-	limit = ((array->max_size - 1) / POINTER_ARRAY_BITMAP_SIZE);
 
 	nanvix_mutex_lock(&array->lock);
 		array->lowest_free = 0;
@@ -488,9 +379,6 @@ PUBLIC void pointer_array_clear(pointer_array_t *array)
 
 		for (int i = 0; i < array->max_size; i++)
 			array->addr[i] = NULL;
-
-		for (int i = 0; i <= limit; ++i)
-			array->used_bits[i] = 0;
 
 	nanvix_mutex_unlock(&array->lock);
 }

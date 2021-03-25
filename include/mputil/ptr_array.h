@@ -40,7 +40,6 @@ struct pointer_array_t
 	int32_t size;             /* List size.                        */
 	int32_t max_size;         /* Array max size.                   */
 	int32_t block_size;       /* block size for each allocation    */
-	uint64_t *used_bits;      /* Free bits array (optimization).   */
 	void **addr;              /* Array of object pointers.         */
 };
 
