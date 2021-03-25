@@ -224,13 +224,13 @@ PRIVATE void test_mpi_comm_pairs(void)
 		uassert(MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
 
 #if TEST_VERBOSE
-		uprintf("Waiting for reply...");
+		uprintf("Rank %d Waiting for reply...", rank);
 #endif /* TEST_VERBOSE */
 
 		uassert(MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
 
 #if TEST_VERBOSE
-		uprintf("Received!");
+		uprintf("Rank %d Received!", rank);
 #endif /* TEST_VERBOSE */
 	}
 	else
@@ -244,13 +244,13 @@ PRIVATE void test_mpi_comm_pairs(void)
 		uassert(MPI_Recv(&inbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
 
 #if TEST_VERBOSE
-		uprintf("Sending reply...");
+		uprintf("Rank %d Sending reply...", rank);
 #endif /* TEST_VERBOSE */
 
 		uassert(MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
 
 #if TEST_VERBOSE
-		uprintf("Sent!");
+		uprintf("Rank %d Sent!", rank);
 #endif /* TEST_VERBOSE */
 	}
 
@@ -303,7 +303,7 @@ PRIVATE void test_mpi_comm_req_queue(void)
 			uassert(inbuffer == remote);
 
 #if TEST_VERBOSE
-			uprintf("Received!");
+			uprintf("Rank %d Received!", rank);
 #endif /* TEST_VERBOSE */
 		}
 
@@ -318,7 +318,7 @@ PRIVATE void test_mpi_comm_req_queue(void)
 			uassert(inbuffer == remote);
 
 #if TEST_VERBOSE
-			uprintf("Received!");
+			uprintf("Rank %d Received!", rank);
 #endif /* TEST_VERBOSE */
 		}
 	}
@@ -333,7 +333,7 @@ PRIVATE void test_mpi_comm_req_queue(void)
 		uassert(MPI_Send(&outbuffer, 1, MPI_INT, remote, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
 
 #if TEST_VERBOSE
-		uprintf("Sent!");
+		uprintf("Rank %d Sent!", rank);
 #endif /* TEST_VERBOSE */
 	}
 }
@@ -375,7 +375,7 @@ PRIVATE void test_mpi_comm_broadcast(void)
 			uassert(MPI_Send(&outbuffer, 1, MPI_INT, i, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
 
 #if TEST_VERBOSE
-		uprintf("Sent!");
+		uprintf("Master Sent!");
 #endif /* TEST_VERBOSE */
 		}
 	}
@@ -392,8 +392,66 @@ PRIVATE void test_mpi_comm_broadcast(void)
 		uassert(inbuffer == rank);
 
 #if TEST_VERBOSE
-		uprintf("Received!");
+		uprintf("Rank %d Received!", rank);
 #endif /* TEST_VERBOSE */
+	}
+}
+
+/*============================================================================*
+ * API Test: Broadcast Communication                                          *
+ *============================================================================*/
+
+/**
+ * @brief API Test: Broadcast for all processes.
+ */
+PRIVATE void test_mpi_comm_gather(void)
+{
+	int rank;
+	int inbuffer, outbuffer;
+
+#if TEST_VERBOSE
+	uprintf("--------------------------");
+
+	/* Fence to synchronize the print outputs for all processes. */
+	uassert(mpi_std_fence() == 0);
+#endif /* TEST_VERBOSE */
+
+	/* Communication test. */
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	/* Master process? */
+	if (rank != 0)
+	{
+		outbuffer = rank;
+
+#if TEST_VERBOSE
+		uprintf("Rank %d preparing to send to master...", rank);
+#endif /* TEST_VERBOSE */
+
+		uassert(MPI_Send(&outbuffer, 1, MPI_INT, 0, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
+
+#if TEST_VERBOSE
+		uprintf("Rank %d Sent!", rank);
+#endif /* TEST_VERBOSE */
+	}
+	else
+	{
+		for (int i = 1; i < MPI_PROCESSES_NR; ++i)
+		{
+			inbuffer = (-1);
+
+#if TEST_VERBOSE
+			uprintf("Master waiting to receive from rank %d...", i);
+#endif /* TEST_VERBOSE */
+
+			uassert(MPI_Recv(&inbuffer, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE) == MPI_SUCCESS);
+
+			uassert(inbuffer == i);
+
+#if TEST_VERBOSE
+			uprintf("Master Received!");
+#endif /* TEST_VERBOSE */
+		}
 	}
 }
 
@@ -463,13 +521,13 @@ PRIVATE void test_mpi_comm_ping_pong(void)
 		uassert(inbuffer == rank);
 
 #if TEST_VERBOSE
-		uprintf("Sending reply...");
+		uprintf("Rank %d Sending reply...", rank);
 #endif /* TEST_VERBOSE */
 
 		uassert(MPI_Send(&outbuffer, 1, MPI_INT, 0, 0, MPI_COMM_WORLD) == MPI_SUCCESS);
 
 #if TEST_VERBOSE
-		uprintf("Sent!");
+		uprintf("Rank %d Sent!", rank);
 #endif /* TEST_VERBOSE */
 	}
 }
@@ -523,6 +581,7 @@ PRIVATE struct test test_api_mpi[] = {
 	{ test_mpi_comm_pairs,           "[test][mpi][comm]     Pairs communication      [passed]" },
 	{ test_mpi_comm_req_queue,       "[test][mpi][comm]     Requisition queue        [passed]" },
 	{ test_mpi_comm_broadcast,       "[test][mpi][comm]     Broadcast                [passed]" },
+	{ test_mpi_comm_gather,          "[test][mpi][comm]     Gather                   [passed]" },
 	{ test_mpi_comm_ping_pong,       "[test][mpi][comm]     Ping Pong                [passed]" },
 	{ test_mpi_finalize,             "[test][mpi][finalize] Finalization             [passed]" },
 	{ test_mpi_after_finalize_flags, "[test][mpi][finalize] Flags after MPI_Finalize [passed]" },
