@@ -401,11 +401,19 @@ PUBLIC int __mpi_processes_init(int(*fn)(int, const char *[]), int argc, const c
 		/* Initializes the local processes list and create the threads that will run them. */
 		for (int i = 1, id = (first_pid + MPI_NODES_NR); id < _processes_nr; id += MPI_NODES_NR, ++i)
 		{
+#if DEBUG
+			uprintf("Spawning mpi-process-%d", id);
+#endif /* DEBUG */
+
 			_local_processes[i] = (mpi_process_t *) pointer_array_get_item(&_processes_list, id);
 			uassert(_local_processes[i] != NULL);
 
 			/* Creates a thread to emulate an MPI process. */
 			uassert(kthread_create(&tid, &_main3_wrapper, NULL) == 0);
+
+#if DEBUG
+			uprintf("mpi-process-%d TID: %d", id, tid);
+#endif /* DEBUG */
 
 			_local_processes[i]->tid = tid;
 
@@ -479,8 +487,8 @@ PUBLIC int mpi_local_proc_init(void)
 	curr_proc->inportal = portalid;
 
 #if DEBUG
-	uprintf("%s inbox: %d", curr_proc_name, mbxid);
-	uprintf("%s inportal: %d", curr_proc_name, portalid);
+	uprintf("%s inbox port: %d", curr_proc_name, nanvix_mailbox_get_port(mbxid));
+	uprintf("%s inportal port: %d", curr_proc_name, nanvix_portal_get_port(portalid));
 #endif /* DEBUG */
 
 	return (0);

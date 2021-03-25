@@ -40,7 +40,7 @@
  * @brief Defines the number of active MPI_PROCESSES.
  */
 #ifndef MPI_PROCESSES_NR
-#define MPI_PROCESSES_NR (MPI_NODES_NR * 2)
+#define MPI_PROCESSES_NR (MPI_NODES_NR * 12)
 #endif
 
 #define MPI_PROCS_PER_CLUSTER_MAX ((MPI_PROCESSES_NR / MPI_NODES_NR) +                \
