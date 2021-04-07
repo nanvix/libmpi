@@ -33,7 +33,7 @@
 /**
  * @brief Struct that defines a mpi_communicator.
  */
-struct mpi_communicator_t
+typedef struct mpi_communicator_t
 {
 	object_t super;                        /* Base object class.             */
 
@@ -45,9 +45,7 @@ struct mpi_communicator_t
 	mpi_errhandler_type_t errhandler_type; /* Type of associated errhandler. */
 
 	struct mpi_communicator_t *parent;     /* Parent communicator.           */
-};
-
-typedef struct mpi_communicator_t mpi_communicator_t;
+} mpi_communicator_t;
 
 /* Class declaration. */
 OBJ_CLASS_DECLARATION(mpi_communicator_t);

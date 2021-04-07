@@ -33,18 +33,17 @@
 /**
  * @brief Enum to describe the type of object that the error handler is defined.
  */
-enum mpi_errhandler_type_t {
+typedef enum {
     MPI_ERRHANDLER_TYPE_PREDEFINED,
     MPI_ERRHANDLER_TYPE_COMM,
     MPI_ERRHANDLER_TYPE_WIN,
     MPI_ERRHANDLER_TYPE_FILE
-};
-typedef enum mpi_errhandler_type_t mpi_errhandler_type_t;
+} mpi_errhandler_type_t;
 
 /**
  * @brief Struct that defines a mpi_errhandler.
  */
-struct mpi_errhandler_t
+typedef struct mpi_errhandler_t
 {
 	object_t super; /* Base object class. */
 
@@ -52,9 +51,7 @@ struct mpi_errhandler_t
 	MPI_Comm_errhandler_function *comm_handler_fn; /* Comm_errhandler function. */
 	MPI_Win_errhandler_function *win_handler_fn;   /* File_errhandler function. */
 	MPI_File_errhandler_function *file_handler_fn; /* Win_errhandler function.  */
-};
-
-typedef struct mpi_errhandler_t mpi_errhandler_t;
+} mpi_errhandler_t;
 
 /* Class declaration. */
 OBJ_CLASS_DECLARATION(mpi_errhandler_t);

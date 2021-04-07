@@ -31,7 +31,7 @@
 /**
  * @brief Struct that defines a dynamic pointer array.
  */
-struct pointer_array_t
+typedef struct pointer_array_t
 {
 	object_t super;           /* Base object class.                */
 
@@ -41,9 +41,7 @@ struct pointer_array_t
 	int32_t max_size;         /* Array max size.                   */
 	int32_t block_size;       /* block size for each allocation    */
 	void **addr;              /* Array of object pointers.         */
-};
-
-typedef struct pointer_array_t pointer_array_t;
+} pointer_array_t;
 
 /* Class declaration. */
 OBJ_CLASS_DECLARATION(pointer_array_t);

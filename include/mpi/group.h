@@ -32,16 +32,14 @@
 /**
  * @brief Struct that defines a mpi_group.
  */
-struct mpi_group_t
+typedef struct mpi_group_t
 {
 	object_t super;               /* Base object class.        */
 
 	struct mpi_process_t **procs; /* Pointer to procs list.    */
 	int size;                     /* Nr of processes in group. */
 	struct mpi_group_t *parent;   /* Parent group pointer.     */
-};
-
-typedef struct mpi_group_t mpi_group_t;
+} mpi_group_t;
 
 /* Class declaration. */
 OBJ_CLASS_DECLARATION(mpi_group_t);
