@@ -52,6 +52,11 @@ export ADDONS ?=
 # Uses LWMPI?
 export NANVIX_LWMPI ?= 1
 
+# Processes distribution mode
+# 1-MPI_PROCESS_SCATTER (default)
+# 2-MPI_PROCESS_COMPACT
+export LWMPI_PROC_MAP ?= 1
+
 #===============================================================================
 # Directories
 #===============================================================================
@@ -110,6 +115,9 @@ export CFLAGS += -D__NANVIX_IKC_USES_ONLY_MAILBOX=0
 
 # Enable LWMPI environment setup
 export CFLAGS += -D__NANVIX_USES_LWMPI=$(NANVIX_LWMPI)
+
+# Define LWMPI PROCESS MAPPING
+export CFLAGS += -D__LWMPI_PROC_MAP=$(LWMPI_PROC_MAP)
 
 # Additional C Flags
 include $(BUILDDIR)/makefile.cflags
