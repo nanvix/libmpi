@@ -161,8 +161,8 @@ PRIVATE void test_mpi_groups(void)
 /**
  * @brief Special structure to assert distinct ranks for distinct threads.
  */
-PRIVATE int ranks_asserted[(MPI_PROCESSES_NR / MPI_NODES_NR) + 1] = {
-	[0 ... (MPI_PROCESSES_NR / MPI_NODES_NR)] = 0
+PRIVATE int ranks_asserted[MPI_PROCS_PER_CLUSTER_MAX] = {
+       [0 ... (MPI_PROCS_PER_CLUSTER_MAX - 1)] = 0
 };
 
 /**
@@ -171,26 +171,33 @@ PRIVATE int ranks_asserted[(MPI_PROCESSES_NR / MPI_NODES_NR) + 1] = {
 PRIVATE void test_mpi_processes_ranks(void)
 {
 	int rank;
-	int base_rank;
-	int local_procs_nr;
-
-	base_rank = (cluster_get_num() - SPAWNERS_NUM);
+	int local_procs;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	/* Marks one initialization in ranks_asserted array. */
-	uassert((rank % MPI_NODES_NR) == (base_rank % MPI_NODES_NR));
+#if (__LWMPI_PROC_MAP == MPI_PROCESS_SCATTER)
+	uassert((rank % MPI_NODES_NR) == (knode_get_num() - MPI_BASE_NODE));
+#elif (__LWMPI_PROC_MAP == MPI_PROCESS_COMPACT)
+	uassert((int) (rank / MPI_PROCS_PER_CLUSTER_MAX) == (knode_get_num() - MPI_BASE_NODE));
+#endif
 
-	ranks_asserted[(rank / MPI_NODES_NR)] = 1;
+	uassert(ranks_asserted[curr_mpi_proc_index()] == 0);
+	ranks_asserted[curr_mpi_proc_index()] = 1;
 
 	/* Fence to ensure that all threads are at the same point. */
 	uassert(mpi_std_fence() == 0);
 
-	local_procs_nr = mpi_local_procs_nr();
+	local_procs = 0;
 
 	/* Verify if all local ranks completed this test. */
-	for (int i = 0; i < local_procs_nr; ++i)
-		uassert(ranks_asserted[i]);
+	for (int i = 0; i < MPI_PROCS_PER_CLUSTER_MAX; ++i)
+	{
+		if (ranks_asserted[i])
+			local_procs++;
+	}
+
+	uassert(local_procs == mpi_local_procs_nr());
 }
 
 /*============================================================================*
