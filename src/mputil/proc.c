@@ -52,10 +52,14 @@ OBJ_CLASS_INSTANCE(mpi_process_t, &process_construct, &process_destruct, sizeof(
  */
 PRIVATE int _processes_nr = MPI_PROCESSES_NR;
 
-PRIVATE int _active_nodes[MPI_NODES_NR];
+PRIVATE int _node_is_active = 0;
 
-/* @note Const barrier parameter workaround. */
-PRIVATE const int *_active_nodes_addr = _active_nodes;
+#if (MPI_NODES_NR > 1)
+	PRIVATE int _active_nodes[MPI_NODES_NR];
+
+	/* @note Const barrier parameter workaround. */
+	PRIVATE const int *_active_nodes_addr = _active_nodes;
+#endif
 
 PRIVATE barrier_t _std_barrier;
 
@@ -290,6 +294,7 @@ PUBLIC int mpi_std_barrier(void)
 		goto end;
 
 	/* Master process waits in the dist. barrier to sync with other clusters. */
+#if (MPI_NODES_NR > 1)
 	if (curr_proc_is_master())
 	{
 		if ((ret = barrier_wait(_std_barrier)) != 0)
@@ -298,6 +303,7 @@ PUBLIC int mpi_std_barrier(void)
 
 	if ((ret = mpi_std_fence()) != 0)
 		goto end;
+#endif
 
 end:
 	return (ret);
@@ -306,6 +312,24 @@ end:
 /*============================================================================*
  * mpi_proc_init()                                                            *
  *============================================================================*/
+
+/**
+ * User-level main routine.
+ */
+extern int __main3(int argc, const char *argv[]);
+
+PUBLIC int __main_wrapper(int argc, const char *argv[])
+{
+	int ret;
+
+	/* Is the current node active? */
+	if (_node_is_active)
+		ret = __main3(argc, argv);
+	else
+		ret = 0;
+
+	return (ret);
+}
 
 /**
  * @brief Special struct to carry the traditional main function args for the
@@ -319,7 +343,7 @@ PRIVATE struct
 } main_args;
 
 /**
- * @brief Wrapper for the user entry point function that followsthe traditional
+ * @brief Wrapper for the user entry point function that follows the traditional
  * pthreads functions signature.
  */
 PRIVATE void * _main3_wrapper(void *args)
@@ -342,14 +366,31 @@ PUBLIC int __mpi_processes_init(int(*fn)(int, const char *[]), int argc, const c
 	int first_pid;       /* First Local process ID. */
 	int local_processes; /* Test verification.      */
 
+	/* Checks if the current node will be active. */
+	if (knode_get_num() >= MPI_BASE_NODE + MPI_NODES_NR)
+	{
+		/* Since this node will be unactive, return immediatelly. */
+		uprintf("Unactive node returning immediatelly from mpi_processes_init...");
+		return (0);
+	}
+
+	/* Sinalizes that the current node is active. */
+	_node_is_active = 1;
+
+	/* Initializes the std_barrier if more than a single cluster is active. */
+#if (MPI_NODES_NR > 1)
+
 	/* Initializes list of nodes for stdbarrier. */
 	for (int i = 0; i < MPI_NODES_NR; ++i)
-		_active_nodes[i] = MPI_PROCESSES_COMPENSATION * MPI_NODES_COMPENSATION + i;
+		_active_nodes[i] = MPI_BASE_NODE + i;
 
-	/* Initializes the std_barrier. */
 	_std_barrier = barrier_create(_active_nodes_addr, MPI_NODES_NR);
+
 	if (!BARRIER_IS_VALID(_std_barrier))
 		return (MPI_ERR_NO_MEM);
+#else
+	_std_barrier = BARRIER_NULL;
+#endif
 
 	/* Initializes the processes list. */
 	OBJ_CONSTRUCT(&_processes_list, pointer_array_t);
@@ -367,15 +408,56 @@ PUBLIC int __mpi_processes_init(int(*fn)(int, const char *[]), int argc, const c
 		uassert(process_allocate() == i);
 
 	/* Calculates the lowest local MPI process number. */
+#if (__LWMPI_PROC_MAP == MPI_PROCESS_SCATTER)
+
 	first_pid = kcluster_get_num() - MPI_PROCESSES_COMPENSATION;
+
+#elif (__LWMPI_PROC_MAP == MPI_PROCESS_COMPACT)
+
+	first_pid = (kcluster_get_num() - MPI_PROCESSES_COMPENSATION) * MPI_PROCS_PER_CLUSTER_MAX;
+
+#endif
 
 	/* Specifies the current thread as the master of the current cluster. */
 	_master_tid = kthread_self();
 
 	/* Calculates how many processes will be locally initialized. */
+#if (__LWMPI_PROC_MAP == MPI_PROCESS_SCATTER)
+
 	_local_processes_nr = ((int) (MPI_PROCESSES_NR / MPI_NODES_NR)) +
 				 ((first_pid < (MPI_PROCESSES_NR % MPI_NODES_NR)) ? 1 : 0
 			      );
+
+#elif (__LWMPI_PROC_MAP == MPI_PROCESS_COMPACT)
+
+	if ((kcluster_get_num() - MPI_PROCESSES_COMPENSATION) < (MPI_NODES_NR - 1))
+		_local_processes_nr = MPI_PROCS_PER_CLUSTER_MAX;
+	else
+	{
+		_local_processes_nr = MPI_PROCESSES_NR % MPI_PROCS_PER_CLUSTER_MAX;
+
+		/* Checks if the last cluster is also full. */
+		if (_local_processes_nr == 0)
+			_local_processes_nr = MPI_PROCS_PER_CLUSTER_MAX;
+	}
+
+#endif
+
+#if (__LWMPI_PROC_MAP == MPI_PROCESS_SCATTER)
+	uprintf("Spawning processes in SCATTER mode...");
+#elif (__LWMPI_PROC_MAP == MPI_PROCESS_COMPACT)
+	uprintf("Spawning processes in COMPACT mode...");
+#endif
+
+#if DEBUG
+	#if (__LWMPI_PROC_MAP == MPI_PROCESS_SCATTER)
+	uprintf("Active nodes: %d", MPI_NODES_NR);
+	uprintf("Number of processes in the current cluster: %d", _local_processes_nr);
+	#elif (__LWMPI_PROC_MAP == MPI_PROCESS_COMPACT)
+	uprintf("Active nodes: %d", MPI_NODES_NR);
+	uprintf("Number of processes in the current cluster: %d", _local_processes_nr);
+	#endif
+#endif
 
 	/* Initializes the local_process[0]. */
 	_local_processes[0] = (mpi_process_t *) pointer_array_get_item(&_processes_list, first_pid);
@@ -399,7 +481,11 @@ PUBLIC int __mpi_processes_init(int(*fn)(int, const char *[]), int argc, const c
 		main_args.argv = argv;
 
 		/* Initializes the local processes list and create the threads that will run them. */
+#if (__LWMPI_PROC_MAP == MPI_PROCESS_SCATTER)
 		for (int i = 1, id = (first_pid + MPI_NODES_NR); id < _processes_nr; id += MPI_NODES_NR, ++i)
+#elif (__LWMPI_PROC_MAP == MPI_PROCESS_COMPACT)
+		for (int i = 1, id = (first_pid + 1); i < _local_processes_nr; i++, id++)
+#endif
 		{
 #if DEBUG
 			uprintf("Spawning mpi-process-%d", id);
@@ -447,10 +533,6 @@ PUBLIC int mpi_local_proc_init(void)
 	curr_proc = curr_mpi_proc();
 	curr_proc_name = process_name(curr_proc);
 
-#if DEBUG
-	uprintf("%s creating inbox", curr_proc_name);
-#endif /* DEBUG */
-
 	/* Initializes input mailbox. */
 	if ((mbxid = nanvix_mailbox_create(curr_proc_name)) < 0)
 	{
@@ -458,20 +540,12 @@ PUBLIC int mpi_local_proc_init(void)
 		goto err0;
 	}
 
-#if DEBUG
-	uprintf("%s creating inportal", curr_proc_name);
-#endif /* DEBUG */
-
 	/* Initializes input portal. */
 	if ((portalid = nanvix_portal_create(curr_proc_name)) < 0)
 	{
 		ret = portalid;
 		goto err1;
 	}
-
-#if DEBUG
-	uprintf("%s registering local port %d", curr_proc_name, nanvix_mailbox_get_port(mbxid));
-#endif /* DEBUG */
 
 	/* Registers the local process in the system name service. */
 	if ((ret = nanvix_name_register(curr_proc_name, nanvix_mailbox_get_port(mbxid))) < 0)
@@ -517,6 +591,10 @@ PUBLIC int __mpi_processes_finalize(void)
 {
 	int limit;
 	mpi_process_t *proc;
+
+	/* Was the node active? */
+	if (!_node_is_active)
+		return (0);
 
 	/* Joins the user threads previously spawned in processes_init. */
 	for (int i = (_local_processes_nr - 1); i > 0; --i)
@@ -568,23 +646,11 @@ PUBLIC int __mpi_processes_finalize(void)
  */
 PUBLIC int mpi_local_proc_finalize(void)
 {
-#if DEBUG
-	uprintf("Thread %d Unregistering", kthread_self());
-#endif /* DEBUG */
-
 	/* Unregisters the local process from the system name service. */
 	uassert(nanvix_name_unregister(process_name(curr_mpi_proc())) == 0);
 
-#if DEBUG
-	uprintf("Thread %d unlinking portal", kthread_self());
-#endif /* DEBUG */
-
 	/* Unlinks the inportal of the local process. */
 	uassert(nanvix_portal_unlink(curr_mpi_proc_inportal()) == 0);
-
-#if DEBUG
-	uprintf("Thread %d unlinking mailbox", kthread_self());
-#endif /* DEBUG */
 
 	/* Unlinks the inbox of the local process. */
 	uassert(nanvix_mailbox_unlink(curr_mpi_proc_inbox()) == 0);

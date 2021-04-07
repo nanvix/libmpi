@@ -30,22 +30,42 @@
 #include <mputil/object.h>
 
 /**
- * @brief Defines the number of active nodes.
- */
-#ifndef MPI_NODES_NR
-#define MPI_NODES_NR NANVIX_PROC_MAX
-#endif
-
-/**
  * @brief Defines the number of active MPI_PROCESSES.
  */
 #ifndef MPI_PROCESSES_NR
-#define MPI_PROCESSES_NR (MPI_NODES_NR * 12)
+	#define MPI_PROCESSES_NR 192
 #endif
 
-#define MPI_PROCS_PER_CLUSTER_MAX ((MPI_PROCESSES_NR / MPI_NODES_NR) +                \
-                                   ((MPI_PROCESSES_NR % MPI_NODES_NR == 0) ? 0 : 1)   \
-                                  )
+/**
+ * @brief Process distribution modes.
+ */
+#define MPI_PROCESS_SCATTER 1
+#define MPI_PROCESS_COMPACT 2
+
+/* Default distribution mapping check. */
+#if ((__LWMPI_PROC_MAP != MPI_PROCESS_SCATTER) && (__LWMPI_PROC_MAP != MPI_PROCESS_COMPACT))
+	#define __LWMPI_PROC_MAP MPI_PROCESS_SCATTER
+#endif
+
+/**
+ * @brief Defines the number of active nodes.
+ */
+#if (__LWMPI_PROC_MAP == MPI_PROCESS_SCATTER)
+
+	#define MPI_PROCS_PER_CLUSTER_MAX ((MPI_PROCESSES_NR / MPI_NODES_NR) +                \
+                                       ((MPI_PROCESSES_NR % MPI_NODES_NR == 0) ? 0 : 1)   \
+                                      )
+
+	#define MPI_NODES_NR ((MPI_PROCESSES_NR < NANVIX_PROC_MAX) ? MPI_PROCESSES_NR : NANVIX_PROC_MAX)
+
+#elif (__LWMPI_PROC_MAP == MPI_PROCESS_COMPACT)
+
+	#define MPI_PROCS_PER_CLUSTER_MAX 12
+
+	#define MPI_NODES_NR ((MPI_PROCESSES_NR / MPI_PROCS_PER_CLUSTER_MAX) +                \
+						  ((MPI_PROCESSES_NR % MPI_PROCS_PER_CLUSTER_MAX == 0) ? 0 : 1)   \
+                         )
+#endif
 
 /**
  * @brief Base compensation for clusters know their local mpi_id.
@@ -56,6 +76,11 @@
  * @brief Compensation for NoC nodes reserved for spawners.
  */
 #define MPI_NODES_COMPENSATION (PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM)
+
+/**
+ * @brief Node number of first compute cluster available to LWMPI.
+ */
+#define MPI_BASE_NODE MPI_PROCESSES_COMPENSATION * MPI_NODES_COMPENSATION
 
 /**
  * @brief Struct that defines a dynamic pointer array.
