@@ -221,7 +221,7 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, int dest,
 		goto ret2;
 
 #if DEBUG
-	uprintf("%s receiving confirmation in %d:%d...", process_name(curr_mpi_proc()), knode_get_num(), nanvix_mailbox_get_port(inbox));
+	uprintf("%s receiving confirmation from %d:ANY in %d:%d...", process_name(curr_mpi_proc()), remote, knode_get_num(), nanvix_mailbox_get_port(inbox));
 #endif /* DEBUG */
 
 	if ((ret = nanvix_mailbox_read(inbox, (void *) &confirm, sizeof(struct comm_message))) < 0)
@@ -239,7 +239,7 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, int dest,
 		goto ret2;
 
 #if DEBUG
-	uprintf("%s waiting for ACK...", process_name(curr_mpi_proc()));
+	uprintf("%s waiting for ACK from %d:%d in %d:%d...", process_name(curr_mpi_proc()), remote, remote_outbox_port, knode_get_num(), nanvix_mailbox_get_port(inbox));
 #endif /* DEBUG */
 
 	if ((ret = nanvix_mailbox_set_remote(inbox, remote, remote_outbox_port)) < 0)
@@ -333,7 +333,7 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 		return (ret);
 
 #if DEBUG
-	uprintf("%s found matching request from %s ...", process_name(curr_mpi_proc()), remote_pname);
+	uprintf("%s found matching request from %s ...", process_name(curr_mpi_proc()), process_name(src));
 #endif /* DEBUG */
 
 	/* Checks the other information that came in the message. */
@@ -356,7 +356,7 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 	reply.msg.confirm.mailbox_port = kmailbox_get_port(outbox);
 
 #if DEBUG
-	uprintf("%s writing confirmation to %d:%d...", process_name(curr_mpi_proc()), remote_node, remote_port);
+	uprintf("%s writing confirmation from %d:%d to %d:%d...", process_name(curr_mpi_proc()), knode_get_num(), kmailbox_get_port(outbox),remote_node, remote_port);
 #endif /* DEBUG */
 
 	/* Emits a confirmation message containing the outbox port that will send the ACK. */
@@ -404,7 +404,7 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 	reply.msg.ret.errcode = ret;
 
 #if DEBUG
-	uprintf("%s sending ACK...", process_name(curr_mpi_proc()));
+	uprintf("%s sending ACK for %d:%d from %d:%d...", process_name(curr_mpi_proc()), remote_node, remote_port, knode_get_num(), kmailbox_get_port(outbox));
 #endif /* DEBUG */
 
 	/* Sends an ACK message. */
