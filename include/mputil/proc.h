@@ -43,6 +43,10 @@
 #define MPI_PROCESS_COMPACT 2
 
 /* Default distribution mapping check. */
+#ifndef __LWMPI_PROC_MAP
+	#define __LWMPI_PROC_MAP MPI_PROCESS_SCATTER
+#endif
+
 #if ((__LWMPI_PROC_MAP != MPI_PROCESS_SCATTER) && (__LWMPI_PROC_MAP != MPI_PROCESS_COMPACT))
 	#define __LWMPI_PROC_MAP MPI_PROCESS_SCATTER
 #endif
