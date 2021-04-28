@@ -27,6 +27,7 @@
 #include <nanvix/sys/portal.h>
 #include <nanvix/sys/mailbox.h>
 #include <nanvix/sys/mutex.h>
+#include <mputil/buffer_slot.h>
 #include <mputil/communication.h>
 #include <mpi/datatype.h>
 #include <mpi/mpi_errors.h>
@@ -70,6 +71,7 @@ PRIVATE void request_header_build(struct comm_message *m, uint16_t cid, int src,
 	m->msg.send.portal_port = portal_port;
 	m->msg.send.inbox_port  = inbox_port;
 	m->msg.send.nodenum     = knode_get_num();
+	m->msg.send.bufferid    = -1;
 }
 
 /*============================================================================*
@@ -164,12 +166,14 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, int dest,
 	int outbox;                  /**< Mailbox used to send request. */
 	int outportal;               /**< Portal used to send data.     */
 	int outportal_port;          /**< Outportal associated port.    */
+	int local_node;
 	int remote;                  /**< Remote process nodenum.       */
 	int remote_port;             /**< Remote process inbox port.    */
 	int remote_outbox_port;      /**< Remote process outbox port.   */
 	const char *remote_pname;    /**< Target process name.          */
 	struct comm_message message; /**< Request message.              */
 	struct comm_message confirm; /**< Confirmation message.         */
+	int bufferid;
 
 	/* Initializes some basic variables. */
 	inbox = curr_mpi_proc_inbox();
@@ -193,13 +197,60 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, int dest,
 	if ((outbox = kmailbox_open(remote, COMM_REQ_RECV_PORT)) < 0)
 		goto ret0;
 
+	local_node = knode_get_num();
+
+	/* Local communication? */
+	if (remote == local_node)
+	{
+#if DEBUG
+		uprintf("%s Proceeding local communication with shared memory copy", process_name(curr_mpi_proc()));
+#endif
+
+		/* Allocates a buffer slot. */
+		if ((bufferid = buffer_slot_reserve(buf, size)) < 0)
+		{
+			ret = bufferid;
+			goto ret1;
+		}
+
+#if DEBUG
+		uprintf("%s allocated buffer slot %d", process_name(curr_mpi_proc()), bufferid);
+#endif
+
+		/* Builds request-to-send message. */
+		request_header_build(&message, cid, src, dest, datatype, size, tag, -1, -1);
+		message.msg.send.bufferid = bufferid;
+
+		/* Sends the request-to-send message to the receiver. */
+		if ((ret = kmailbox_write(outbox, (const void*) &message, sizeof(struct comm_message))) < 0)
+			goto ret1;
+
+#if DEBUG
+		uprintf("%s waiting in buffer slot %d", process_name(curr_mpi_proc()), bufferid);
+#endif
+
+		/* Waits for the underlying buffer slot to be consumed. */
+		uassert(buffer_slot_wait(bufferid) == 0);
+
+#if DEBUG
+		uprintf("%s releasing buffer slot %d", process_name(curr_mpi_proc()), bufferid);
+#endif
+
+		/* Releases the previously reserved buffer slot. */
+		uassert(buffer_slot_release(bufferid) == 0);
+
+		/* Indicates a successful return. */
+		ret = MPI_SUCCESS;
+		goto ret1;
+	}
+
 	/**
 	 * Opens a new portal to send data.
 	 *
 	 * @note The remote_port is the same for outbox and outportal because
 	 * LWMPI uses stdikc as default inbox/inportal.
 	 */
-	if ((outportal = kportal_open(knode_get_num(), remote, remote_port)) < 0)
+	if ((outportal = kportal_open(local_node, remote, remote_port)) < 0)
 		goto ret1;
 
 	/* Gets outportal port number to send in the request. */
@@ -221,7 +272,7 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, int dest,
 		goto ret2;
 
 #if DEBUG
-	uprintf("%s receiving confirmation from %d:ANY in %d:%d...", process_name(curr_mpi_proc()), remote, knode_get_num(), nanvix_mailbox_get_port(inbox));
+	uprintf("%s receiving confirmation from %d:ANY in %d:%d...", process_name(curr_mpi_proc()), remote, local_node, nanvix_mailbox_get_port(inbox));
 #endif /* DEBUG */
 
 	if ((ret = nanvix_mailbox_read(inbox, (void *) &confirm, sizeof(struct comm_message))) < 0)
@@ -239,7 +290,7 @@ PRIVATE int __ssend(int cid, const void *buf, size_t size, int src, int dest,
 		goto ret2;
 
 #if DEBUG
-	uprintf("%s waiting for ACK from %d:%d in %d:%d...", process_name(curr_mpi_proc()), remote, remote_outbox_port, knode_get_num(), nanvix_mailbox_get_port(inbox));
+	uprintf("%s waiting for ACK from %d:%d in %d:%d...", process_name(curr_mpi_proc()), remote, remote_outbox_port, local_node, nanvix_mailbox_get_port(inbox));
 #endif /* DEBUG */
 
 	if ((ret = nanvix_mailbox_set_remote(inbox, remote, remote_outbox_port)) < 0)
@@ -312,10 +363,12 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 	int inportal;                /**< Process stdinportal.     */
 	int overflow;                /**< Overflow flag.           */
 	int outbox;                  /**< Output mailbox.          */
+	int local_node;
 	int remote_node;             /**< Remote node number.      */
 	int remote_port;             /**< Remote node port number. */
 	struct comm_message message; /**< Received message.        */
 	struct comm_message reply;   /**< Requisition reply.       */
+	int bufferid;
 
 	UNUSED(src);
 
@@ -340,13 +393,39 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 	if (!mpi_datatypes_match(datatype, message.msg.send.datatype))
 		return (MPI_ERR_TYPE);
 
-	ret = MPI_ERR_INTERN;
-
-	uassert(nanvix_mutex_lock(&_recv_lock) == 0);
+	local_node = knode_get_num();
 
 	/* Gets remote inbox port number. */
 	remote_node = message.msg.send.nodenum;
 	remote_port = message.msg.send.inbox_port;
+
+	/* Local communication? */
+	if (remote_node == local_node)
+	{
+		/* Retrieves bufferid from the message. */
+		bufferid = message.msg.send.bufferid;
+
+#if DEBUG
+		uprintf("%s proceeding with local communication receive in buffer slot %d...", process_name(curr_mpi_proc()), bufferid);
+#endif
+
+		/* Retrieves message from the underlying buffer slot. */
+		uassert(buffer_slot_read(bufferid, buf, size) == 0);
+
+#if DEBUG
+		uprintf("%s received!", process_name(curr_mpi_proc()));
+#endif
+
+		return (MPI_SUCCESS);
+	}
+
+	/**
+	 * Proceeds with the remote receive procedure.
+	 */
+
+	ret = MPI_ERR_INTERN;
+
+	uassert(nanvix_mutex_lock(&_recv_lock) == 0);
 
 	/* Opens a mailbox to send the ACK. */
 	if ((outbox = kmailbox_open(remote_node, remote_port)) < 0)
@@ -356,7 +435,7 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 	reply.msg.confirm.mailbox_port = kmailbox_get_port(outbox);
 
 #if DEBUG
-	uprintf("%s writing confirmation from %d:%d to %d:%d...", process_name(curr_mpi_proc()), knode_get_num(), kmailbox_get_port(outbox),remote_node, remote_port);
+	uprintf("%s writing confirmation from %d:%d to %d:%d...", process_name(curr_mpi_proc()), local_node, kmailbox_get_port(outbox),remote_node, remote_port);
 #endif /* DEBUG */
 
 	/* Emits a confirmation message containing the outbox port that will send the ACK. */
@@ -400,11 +479,11 @@ PRIVATE int __recv(int cid, void *buf, size_t size, mpi_process_t *src, int data
 
 	/* Builds the return message. */
 	reply.req.cid         = cid;
-	reply.req.src         = knode_get_num();
+	reply.req.src         = local_node;
 	reply.msg.ret.errcode = ret;
 
 #if DEBUG
-	uprintf("%s sending ACK for %d:%d from %d:%d...", process_name(curr_mpi_proc()), remote_node, remote_port, knode_get_num(), kmailbox_get_port(outbox));
+	uprintf("%s sending ACK for %d:%d from %d:%d...", process_name(curr_mpi_proc()), remote_node, remote_port, local_node, kmailbox_get_port(outbox));
 #endif /* DEBUG */
 
 	/* Sends an ACK message. */

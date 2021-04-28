@@ -25,6 +25,7 @@
 #include <nanvix/sys/mutex.h>
 #include <nanvix/runtime/stdikc.h>
 #include <mputil/proc.h>
+#include <mputil/buffer_slot.h>
 #include <mputil/communication.h>
 #include <mputil/comm_request.h>
 #include <mpi/mpiruntime.h>
@@ -110,6 +111,13 @@ PUBLIC int mpi_init(int argc, char **argv)
 	/* Initialize MPI_Ops. */
 
 	/* Initialize Buffered Send component. */
+
+	/* Initialize buffer slots for local communications. */
+	if ((ret = buffer_slots_init()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! buffer_slots_init() failed");
+		goto end;
+	}
 
 	/* Initialize requests underlying module. */
 	if ((ret = comm_request_init()) != MPI_SUCCESS)
@@ -327,6 +335,13 @@ PUBLIC int mpi_finalize(void)
 	if ((ret = comm_request_finalize()) != MPI_SUCCESS)
 	{
 		uprintf("ERROR!!! comm_request_finalize() failed");
+		goto end;
+	}
+
+	/* Finalize underlying buffer slots. */
+	if ((ret = buffer_slots_finalize()) != MPI_SUCCESS)
+	{
+		uprintf("ERROR!!! buffer_slots_finalize() failed");
 		goto end;
 	}
 

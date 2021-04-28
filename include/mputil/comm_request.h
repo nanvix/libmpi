@@ -55,11 +55,12 @@ struct comm_message
 	{
 		struct
 		{
-			uint16_t datatype;   /**< Datatype.          */
-			size_t size;         /**< Message size.      */
-			uint8_t portal_port; /**< Port Number.       */
-			uint8_t inbox_port;  /**< Inbox Port Number. */
-			uint8_t nodenum;     /**< Node Number.       */
+			uint16_t datatype;   /**< Datatype.                               */
+			size_t size;         /**< Message size.                           */
+			uint8_t portal_port; /**< Port Number.                            */
+			uint8_t inbox_port;  /**< Inbox Port Number.                      */
+			uint8_t nodenum;     /**< Node Number.                            */
+			uint16_t bufferid;   /**< Opt. bufferid for local communications. */
 		} send;
 
 		struct
