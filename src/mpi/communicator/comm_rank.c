@@ -39,18 +39,24 @@ static const char FUNC_NAME[] = "MPI_Comm_rank";
  */
 PUBLIC int MPI_Comm_rank(MPI_Comm comm, int *rank)
 {
+	int ret;
+
 	/* Parameters checking. */
 	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
 
 	/* Bad communicator. */
 	if (!mpi_comm_is_valid(comm))
-		return (MPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME));
+		ret = MPI_ERR_COMM;
 
 	/* Bad rank holder. */
 	if (rank == NULL)
-		return (MPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME));
+		ret = MPI_ERR_ARG;
 
-	*rank = mpi_comm_rank((mpi_communicator_t *) comm);
+	/* Retrieves the current process rank from the given communicator. */
+	ret = mpi_comm_rank((mpi_communicator_t *) comm, rank);
+
+	/* Checks if there was an error and calls an error handler case positive. */
+	MPI_ERRHANDLER_CHECK(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
 
 	return (MPI_SUCCESS);
 }

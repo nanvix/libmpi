@@ -25,7 +25,6 @@
 #ifndef NANVIX_MPI_COMMUNICATOR_H_
 #define NANVIX_MPI_COMMUNICATOR_H_
 
-#include <nanvix/hlib.h>
 #include <mputil/object.h>
 #include <mpi/group.h>
 #include <mpi/errhandler.h>
@@ -34,12 +33,11 @@
 /**
  * @brief Struct that defines a mpi_communicator.
  */
-struct mpi_communicator_t
+typedef struct mpi_communicator_t
 {
 	object_t super;                        /* Base object class.             */
 
 	struct mpi_group_t *group;             /* Group associated with comm.    */
-	int my_rank;                           /* Local rank inside comm.        */
 	int pt2pt_cid;                         /* Point-to-point context ID.     */
 	int coll_cid;                          /* Collective context ID.         */
 
@@ -47,9 +45,7 @@ struct mpi_communicator_t
 	mpi_errhandler_type_t errhandler_type; /* Type of associated errhandler. */
 
 	struct mpi_communicator_t *parent;     /* Parent communicator.           */
-};
-
-typedef struct mpi_communicator_t mpi_communicator_t;
+} mpi_communicator_t;
 
 /* Class declaration. */
 OBJ_CLASS_DECLARATION(mpi_communicator_t);
@@ -78,12 +74,14 @@ extern int mpi_comm_free(mpi_communicator_t **comm);
  * @brief Gets the local process rank in @p comm.
  *
  * @param comm Target communicator.
+ * @param rank Returned rank holder.
  *
- * @returns The local process rank in the communicator.
+ * @returns Upon successful completion, MPI_SUCESS is returned.
+ * Upon failure, a negative error code is returned instead.
  */
-static inline int mpi_comm_rank(mpi_communicator_t * comm)
+static inline int mpi_comm_rank(mpi_communicator_t * comm, int *rank)
 {
-    return (comm->my_rank);
+    return (mpi_group_rank(comm->group, rank));
 }
 
 /**

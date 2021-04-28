@@ -32,15 +32,13 @@
 /**
  * @brief Struct that defines a mpi_datatype_t.
  */
-struct mpi_datatype_t
+typedef struct mpi_datatype_t
 {
 	object_t super; /* Base object class.                */
 
 	uint16_t id;    /* Index in the datatypes array.     */
 	int size;       /* Total size in bytes used by data. */
-};
-
-typedef struct mpi_datatype_t mpi_datatype_t;
+} mpi_datatype_t;
 
 /* Class declaration. */
 OBJ_CLASS_DECLARATION(mpi_datatype_t);

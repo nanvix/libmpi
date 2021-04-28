@@ -32,17 +32,14 @@
 /**
  * @brief Struct that defines a mpi_group.
  */
-struct mpi_group_t
+typedef struct mpi_group_t
 {
 	object_t super;               /* Base object class.        */
 
-	int my_rank;                  /* Local rank inside group.  */
 	struct mpi_process_t **procs; /* Pointer to procs list.    */
 	int size;                     /* Nr of processes in group. */
 	struct mpi_group_t *parent;   /* Parent group pointer.     */
-};
-
-typedef struct mpi_group_t mpi_group_t;
+} mpi_group_t;
 
 /* Class declaration. */
 OBJ_CLASS_DECLARATION(mpi_group_t);
@@ -107,23 +104,12 @@ static inline int mpi_group_size(mpi_group_t * group)
  * @brief Gets the local process rank inside the given group.
  *
  * @param group Group descriptor.
+ * @param rank  Returned rank holder.
  *
- * @returns The local process rank inside the group.
+ * @returns Upon successful completion, MPI_SUCESS is returned.
+ * Upon failure, a negative error code is returned instead.
  */
-static inline int mpi_group_rank(mpi_group_t * group)
-{
-	return group->my_rank;
-}
-
-/**
- * @brief Sets the local process rank inside the given group.
- *
- * @param group Group descriptor.
- * @param proc  Local process descriptor.
- *
- * @note A NULL pointer in @p proc will set the group rank to MPI_UNDEFINED.
- */
-extern void mpi_group_set_rank(mpi_group_t * group, mpi_process_t * proc);
+extern int mpi_group_rank(mpi_group_t * group, int *rank);
 
 /**
  * @brief Gets the proc associated with rank @p rank.

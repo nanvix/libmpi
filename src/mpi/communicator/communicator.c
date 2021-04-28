@@ -22,12 +22,10 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hlib.h>
 #include <nanvix/ulib.h>
-#include <posix/errno.h>
 #include <mpi/communicator.h>
 #include <mpi/mpiruntime.h>
-#include <mputil/comm_context.h>
+#include <mputil/communication.h>
 
 PRIVATE void mpi_comm_construct(mpi_communicator_t *);
 PRIVATE void mpi_comm_destruct(mpi_communicator_t *);
@@ -50,7 +48,6 @@ PRIVATE void mpi_comm_construct(mpi_communicator_t * comm)
 	uassert(comm != NULL);
 
 	comm->group           = NULL;
-	comm->my_rank         = MPI_UNDEFINED;
 	comm->pt2pt_cid       = MPI_UNDEFINED;
 	comm->coll_cid        = MPI_UNDEFINED;
 	comm->error_handler   = NULL;
@@ -188,10 +185,8 @@ PUBLIC int mpi_comm_init(void)
 		return (MPI_ERR_NO_MEM);
 
 	mpi_group_increment_proc_count(group);
-	mpi_group_set_rank(group, process_local());
 
 	_mpi_comm_world.group         = group;
-	_mpi_comm_world.my_rank       = group->my_rank;
 	_mpi_comm_world.pt2pt_cid     = 0;
 	_mpi_comm_world.coll_cid      = 1;
 	_mpi_comm_world.error_handler = MPI_ERRORS_ARE_FATAL;
@@ -205,10 +200,8 @@ PUBLIC int mpi_comm_init(void)
 		return (MPI_ERR_NO_MEM);
 
 	mpi_group_increment_proc_count(group);
-	mpi_group_set_rank(group, process_local());
 
 	_mpi_comm_self.group         = group;
-	_mpi_comm_self.my_rank       = group->my_rank;
 	_mpi_comm_self.pt2pt_cid     = 2;
 	_mpi_comm_self.coll_cid      = MPI_UNDEFINED;
 	_mpi_comm_self.error_handler = MPI_ERRORS_ARE_FATAL;
@@ -218,7 +211,6 @@ PUBLIC int mpi_comm_init(void)
 	OBJ_CONSTRUCT(&_mpi_comm_null, mpi_communicator_t);
 	_mpi_comm_null.group         = MPI_GROUP_NULL;
 	OBJ_RETAIN(_mpi_comm_null.group);
-	_mpi_comm_null.my_rank       = MPI_PROC_NULL;
 	_mpi_comm_null.error_handler = MPI_ERRORS_ARE_FATAL;
 	OBJ_RETAIN(_mpi_comm_null.error_handler);
 	

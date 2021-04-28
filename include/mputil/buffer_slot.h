@@ -22,45 +22,37 @@
  * SOFTWARE.
  */
 
-#include <mpi/errhandler.h>
-#include <mpi/communicator.h>
-#include <mpi/group.h>
-#include <mpi.h>
-
-static const char FUNC_NAME[] = "MPI_Group_rank";
+#ifndef NANVIX_BUFFER_SLOT_H_
+#define NANVIX_BUFFER_SLOT_H_
 
 /**
- * @brief Puts in @p rank the rank of the calling process inside @p group.
- *
- * @param group Target group.
- * @param rank  Location where will be stored the result.
- *
- * @returns Upon successful completion, MPI_SUCCESS is returned. An MPI errorcode
- * is returned instead.
- *
- * @note If the local process doesn't appear on the given group, MPI_UNDEFINED
- * appears in @p rank.
+ * @todo Add a detailed description.
  */
-PUBLIC int MPI_Group_rank(MPI_Group group, int *rank)
-{
-	int ret;
+extern int buffer_slot_reserve(const void *buffer, size_t max_size);
 
-	/* Parameters checking. */
-	MPI_CHECK_INIT_FINALIZE(FUNC_NAME);
+/**
+ * @todo Add a detailed description.
+ */
+extern int buffer_slot_release(int bufferid);
 
-	/* Bad group. */
-	if (!mpi_group_is_valid(group))
-		ret = MPI_ERR_GROUP;
+/**
+ * @todo Add a detailed description.
+ */
+extern int buffer_slot_wait(int bufferid);
 
-	/* Bad rank holder. */
-	if (rank == NULL)
-		ret = MPI_ERR_ARG;
+/**
+ * @todo Add a detailed description.
+ */
+extern int buffer_slot_read(int bufferid, void *buffer, size_t size);
 
-	/* Retrieves the current process rank from the given group. */
-	ret = mpi_group_rank((mpi_group_t *) group, rank);
+/**
+ * @todo Add a detailed description.
+ */
+extern int buffer_slots_init(void);
 
-	/* Checks if there was an error and calls an error handler case positive. */
-	MPI_ERRHANDLER_CHECK(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
+/**
+ * @todo Add a detailed description.
+ */
+extern int buffer_slots_finalize(void);
 
-	return (MPI_SUCCESS);
-}
+#endif /* NANVIX_BUFFER_SLOT_H_ */

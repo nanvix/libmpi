@@ -25,15 +25,23 @@
 #ifndef NANVIX_COMM_REQUEST_H_
 #define NANVIX_COMM_REQUEST_H_
 
+#include <nanvix/kernel/mailbox.h>
+
+/**
+ * @brief Predefined port number that is used to receive communication requests.
+ */
+#define COMM_REQ_RECV_PORT (KMAILBOX_PORT_NR - 1)
+
 /**
  * @brief Struct that defines a basic communication request.
  */
 struct comm_request
 {
-	int16_t cid;           /* Request context. */
-	int16_t src;           /* Source.          */
-	int32_t tag;           /* Message tag.     */
-	int32_t received_size; /* Received size.   */
+	int16_t cid;           /**< Request context. */
+	int16_t src;           /**< Source rank.     */
+	int16_t target;        /**< Target rank.     */
+	int32_t tag;           /**< Message tag.     */
+	int32_t received_size; /**< Received size.   */
 };
 
 /**
@@ -47,14 +55,22 @@ struct comm_message
 	{
 		struct
 		{
-			uint16_t datatype;   /**< Datatype.     */
-			size_t size;         /**< Message size. */
-			uint8_t portal_port; /**< Port Number.  */
+			uint16_t datatype;   /**< Datatype.                               */
+			size_t size;         /**< Message size.                           */
+			uint8_t portal_port; /**< Port Number.                            */
+			uint8_t inbox_port;  /**< Inbox Port Number.                      */
+			uint8_t nodenum;     /**< Node Number.                            */
+			uint16_t bufferid;   /**< Opt. bufferid for local communications. */
 		} send;
 
 		struct
 		{
-			int errcode; /* Function return. */
+			uint8_t mailbox_port; /**< Outbox port_nr. */
+		} confirm;
+
+		struct
+		{
+			int errcode; /**< Function return. */
 		} ret;
 	} msg;
 };
@@ -62,29 +78,15 @@ struct comm_message
 /**
  * @brief Builds a new communication requisition.
  *
- * @param cid Request context.
- * @param src Request src.
- * @param tag Request tag.
- * @param req Request reference to be initialized.
+ * @param cid    Request context.
+ * @param src    Request src.
+ * @param target Request target.
+ * @param tag    Request tag.
+ * @param req    Request reference to be initialized.
  *
  * @todo Add a hash function to make requests comparation quicker.
  */
-extern void comm_request_build(int cid, int src, int tag, struct comm_request *req);
-
-/**
- * @brief Allocates a new request and registers it in the requisitions queue.
- *
- * @param msg Requisition to be registered.
- *
- * @returns Upon successful completion, zero is returned. Upon failure, a negative
- * error code is returned instead.
- *
- * @todo Implement this function.
- *
- * @note This function needs to copy the req attributes in a safe structure, not only
- * storing its reference.
- */
-extern int comm_request_register(struct comm_message *msg);
+extern void comm_request_build(int cid, int src, int target, int tag, struct comm_request *req);
 
 /**
  * @brief Search into Request Queue.
@@ -97,15 +99,14 @@ extern int comm_request_register(struct comm_message *msg);
 extern int comm_request_search(struct comm_message *msg);
 
 /**
- * @brief Compares if two communication requisitions are equal.
+ * @brief Receives a new communication request from the IKC facility.
  *
- * @param req1 First requisition to be compared.
- * @param req2 Second requisition.
+ * @param msg Message holder with a valid request information.
  *
- * @returns Returns ZERO if the requisitions are different and a NON-ZERO value if
- * they match correctly.
+ * @returns Upon successful completion, zero is returned with the received message
+ * copied into @p msg. Upon failure, a negative error code is returned instead.
  */
-extern int comm_request_match(struct comm_request *req1, struct comm_request *req2);
+extern int comm_request_receive(struct comm_message *msg);
 
 /**
  * @brief Initializes the requests submodule.

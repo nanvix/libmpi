@@ -24,7 +24,6 @@
 
 #include <nanvix/hlib.h>
 #include <nanvix/ulib.h>
-#include <posix/errno.h>
 #include <mpi/datatype.h>
 
 PRIVATE void mpi_datatype_construct(mpi_datatype_t *);

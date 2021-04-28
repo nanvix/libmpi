@@ -23,7 +23,7 @@
  */
 
 #include <nanvix/runtime/pm.h>
-#include <mputil/comm_context.h>
+#include <mputil/communication.h>
 #include <mputil/comm_request.h>
 #include <mpi/pt2pt_comm.h>
 #include <mpi/communicator.h>
@@ -37,9 +37,18 @@ PUBLIC int mpi_send(const void *buf, int count, MPI_Datatype datatype, int dest,
 {
 	int ret;
 	int cid;
+	int src;
 	size_t size;
 	int datatype_id;
 	mpi_process_t *dest_proc;
+
+	/* Gets the target process based in dest rank. */
+	if ((ret = mpi_comm_get_proc(comm, dest, &dest_proc)) != MPI_SUCCESS)
+		goto end;
+
+	/* Gets the current process rank in comm. */
+	if ((ret = mpi_comm_rank(comm, &src)) != MPI_SUCCESS)
+		goto end;
 
 	/* Gets the communicator context ID. */
 	cid = mpi_comm_get_pt2pt_cid(comm);
@@ -47,15 +56,12 @@ PUBLIC int mpi_send(const void *buf, int count, MPI_Datatype datatype, int dest,
 	/* Calculates the send total size. */
 	size = count * mpi_datatype_size(datatype);
 
-	/* Gets the target process based in dest rank. */
-	if ((ret = mpi_comm_get_proc(comm, dest, &dest_proc)) != MPI_SUCCESS)
-		return (ret);
-
 	/* Gets the datatype id. */
 	datatype_id = mpi_datatype_id(datatype);
 
-	ret = send(cid, buf, size, dest_proc, datatype_id, tag, mode);
+	ret = send(cid, buf, size, src, dest, dest_proc, datatype_id, tag, mode);
 
+end:
 	return (ret);
 }
 
@@ -67,9 +73,9 @@ PUBLIC int mpi_recv(void *buf, int count, MPI_Datatype datatype, int source,
 {
 	int ret;
 	int cid;
+	int rank;
 	size_t size;
 	int datatype_id;
-	int src_nodenum;
 	mpi_process_t *src_proc;
 	struct comm_request request;
 
@@ -86,14 +92,15 @@ PUBLIC int mpi_recv(void *buf, int count, MPI_Datatype datatype, int source,
 	/* Gets the datatype id. */
 	datatype_id = mpi_datatype_id(datatype);
 
-	/* Lookup for the source nodenum. */
-	if ((src_nodenum = nanvix_name_lookup(process_name(src_proc))) < 0)
-		return (MPI_ERR_UNKNOWN);
+	/* Gets the local process rank. */
+	if ((ret = mpi_comm_rank((mpi_communicator_t *) comm, &rank)) != MPI_SUCCESS)
+		return (ret);
 
 	/* Builds the recv request to be compared in the underlying function. */
-	request.cid = cid;
-	request.src = src_nodenum;
-	request.tag = tag;
+	request.cid    = cid;
+	request.src    = source;
+	request.target = rank;
+	request.tag    = tag;
 
 	ret = recv(cid, buf, size, src_proc, datatype_id, &request);
 
