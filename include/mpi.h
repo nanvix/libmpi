@@ -271,4 +271,6 @@ extern int MPI_Initialized(int *flag);
 extern int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status);
 extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm);
 
+extern int mpi_std_barrier(void);
+
 #endif /* NANVIX_LIBMPI_H_ */
